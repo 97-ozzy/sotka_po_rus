@@ -1,5 +1,6 @@
 import asyncpg
 import random
+import sqlite3
 
 
 cache = {}
@@ -39,3 +40,23 @@ async def load_task(pool, task_number: int):
         cache[task_number] = [(row['options'], row['correct_answer']) for row in rows]
         return random.choice(cache[task_number])
 
+
+
+def add_user_to_db(user_id: int):
+    conn = sqlite3.connect("database/users.db")  # укажи имя своей базы
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            premium BOOLEAN DEFAULT FALSE
+        )
+    ''')
+
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (user_id)
+        VALUES (?)
+    ''', (user_id,))
+
+    conn.commit()
+    conn.close()
