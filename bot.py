@@ -2,8 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
 import asyncio
-from handlers import register_handlers
-#from database import init_db
+from handlers import register_all_handlers
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -15,7 +14,7 @@ async def main():
     dp = Dispatcher()
 
 
-    register_handlers(dp)
+    register_all_handlers(dp)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

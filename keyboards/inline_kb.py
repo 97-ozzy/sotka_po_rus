@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 def task_keyboard():
     inline_keyboard = []
@@ -13,12 +13,6 @@ def task_keyboard():
         inline_keyboard.append(row)
 
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-
-def answer_keyboard(options):
-    return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=opt)] for opt in options],
-        resize_keyboard=True
-    )
 
 def wrong_answer_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
