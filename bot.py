@@ -1,11 +1,9 @@
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
-from aiogram.types import BotCommand
 import asyncio
 from handlers import register_all_handlers
 import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv('utils/.env')
 
 TOKEN = os.getenv("BOT_TOKEN")
 
