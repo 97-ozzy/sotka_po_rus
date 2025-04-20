@@ -1,6 +1,6 @@
 import asyncpg
 import random
-
+from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD
 cache = {}
 
 _pool = None
@@ -10,11 +10,11 @@ async def get_pool():
     global _pool
     if _pool is None:
         _pool = await asyncpg.create_pool(
-            user='postgres',
-            password='ozzy971',
-            database='sotka_po_rus_tasks',
-            host='localhost',
-            port=5432
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            host=DB_HOST,
+            port=DB_PORT
         )
 
     return _pool
@@ -63,13 +63,17 @@ async def get_random_task(pool, task_number: int):
         return random.choice(cache[task_number])
 
 
-async def add_user_to_db(user_id: int, username):
+async def add_user_to_db(user_id: int, username: str):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await conn.execute('''
-            INSERT INTO users (user_id, username)
-            VALUES ($1, $2)
-        ''', user_id, username)
+        user_exists = await conn.fetchval(
+            "SELECT 1 FROM users WHERE user_id = $1", user_id
+        )
+        if not user_exists:
+            await conn.execute(
+                "INSERT INTO users (user_id, username) VALUES ($1, $2)",
+                user_id, username
+            )
 
 async def submit_new_word(user_id, task_number, correct_word, incorrect_words_str):
     pool = await get_pool()

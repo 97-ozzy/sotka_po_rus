@@ -1,6 +1,6 @@
 from aiogram import Bot, Dispatcher
 import asyncio
-
+from middlewares.antiflood import AntiFloodMiddleware
 from database.database import init_dbs
 from handlers import register_all_handlers
 
@@ -11,6 +11,9 @@ async def main():
 
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
+
+
+    dp.message.middleware(AntiFloodMiddleware(cooldown_seconds=0.6))
 
     register_all_handlers(dp)
     await dp.start_polling(bot)
