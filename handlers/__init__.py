@@ -15,5 +15,7 @@ all_handlers = [
 ]
 
 def register_all_handlers(dp):
+
     for router in all_handlers:
         dp.include_router(router)
+

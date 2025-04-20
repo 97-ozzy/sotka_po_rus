@@ -30,6 +30,3 @@ async def fill_db():
     await conn.close()
 
  #asyncio.run(fill_db())
-
-
-

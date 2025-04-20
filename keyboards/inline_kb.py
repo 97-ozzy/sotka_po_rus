@@ -19,3 +19,12 @@ def wrong_answer_keyboard():
         [InlineKeyboardButton(text="🔁 Начать заново", callback_data="repeat_task")],
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
     ])
+
+def moderation_keyboard(sub_id):
+    return  InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{sub_id}"),
+            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{sub_id}")
+        ],
+        [InlineKeyboardButton(text="🚪 Выход", callback_data="moderation_exit")]
+    ])

@@ -3,6 +3,40 @@ import random
 import sqlite3
 
 
+def init_dbs():
+    conn = sqlite3.connect("requests.db")
+    cursor = conn.cursor()
+
+
+    # Create submissions table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS word_submissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        task_number INTEGER,
+        correct_word TEXT,
+        incorrect_words TEXT,
+        status TEXT DEFAULT 'pending',
+        submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    conn.commit()
+    conn.close()
+
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                username TEXT,
+                premium BOOLEAN DEFAULT FALSE,
+                registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+    conn.commit()
+    conn.close()
+
 cache = {}
 
 _pool = None

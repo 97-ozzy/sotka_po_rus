@@ -17,7 +17,7 @@ with open("database/questions.json", "r", encoding="utf-8") as f:
 
 @router.message(F.text == "/practice")
 async def practice(message: Message):
-    await message.answer("Выберите номер задания:", reply_markup=task_keyboard())
+    await message.answer("Выберите номер задания: \n№4 - ударения\n№9 - гласные в корне\n№10 - приставки", reply_markup=task_keyboard())
 
 @router.callback_query(F.data.startswith("task_"))
 async def choose_task(callback: CallbackQuery, state: FSMContext):
