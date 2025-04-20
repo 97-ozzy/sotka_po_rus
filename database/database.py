@@ -49,10 +49,10 @@ async def get_pool():
             user='postgres',
             password='ozzy971',
             database='sotka_po_rus_tasks',
-            host='localhost',  # Можно использовать "127.0.0.1" или "localhost"
+            host='localhost',
             port=5432
         )
-        print('dfsa')
+
     return _pool
 
 

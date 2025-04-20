@@ -36,8 +36,8 @@ async def submit_word(message: types.Message, state: FSMContext):
     await state.set_state(Moderation.waiting_for_word)
     await message.reply(
         "Пожалуйста, отправьте в формате:\n"
-        "`номер_задания правильное_слово неправильные_написания`\n"
-        "Например:\n9 брошюра брошура,брашура\n(неправильные через запятую)",
+        "номер_задания правильное_слово неправильные_написания\n"
+        "Например:\n9 брошюра брошура\n",
         parse_mode="Markdown"
     )
 
