@@ -3,6 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command, CommandStart
 from aiogram.types import ReplyKeyboardRemove
 from database.database import add_user_to_db
+from config import ADMIN_IDS
 
 router = Router()
 
@@ -18,3 +19,11 @@ async def start(message: Message):
 @router.message(Command("help"))
 async def help_info(message: Message):
     await message.answer("Вопросы по русскому языку? Я помогу!")
+
+@router.message(Command("ac"))
+async def help_info(message: Message):
+    if message.from_user.id not in ADMIN_IDS:
+        return await message.answer("⛔ Нет доступа")
+    await message.answer("/moderate\n\n"
+                         "/add_new_words\n\n"
+                         "/edit_words")
