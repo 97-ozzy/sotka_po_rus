@@ -4,6 +4,7 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from database.database import submit_new_word
 from fsm import Moderation
+from handlers.base import start
 
 router = Router()
 
@@ -11,10 +12,10 @@ router = Router()
 async def submit_word(message: types.Message, state: FSMContext):
     await state.set_state(Moderation.waiting_for_word)
     await message.reply(
+        "Предлагайте свои слова для заданий 9 - 15\n"
         "Пожалуйста, отправьте в формате:\n"
-        "(номер задания) (правильное слово) (неправильные написания)\n"
-        "Например:\n9 брошюра брошура\n"
-        "Например:\n4 киоскЕр киОскер\n",
+        "9 брошюра брошура\n\n"
+        "Чтоб выйти нажмите - /start",
         parse_mode="Markdown"
     )
 
@@ -50,11 +51,11 @@ async def process_submission(message: Message, state: FSMContext):
 
         await message.reply(
             f"🔄️ Отправлено на модерацию\n"
-            f"📚 Задание {task_number}: <b>{correct_word}</b>\n"
-            f"❌ Ошибки: <i>{incorrect_words_str}</i>",
+            f"📚 Задание {task_number}: <b>{correct_word}</b>\n",
             parse_mode="HTML"
         )
     except Exception as e:
         await message.reply(f"⚠️ Ошибка при сохранении: {str(e)}")
     finally:
         await state.clear()
+        await start(message)

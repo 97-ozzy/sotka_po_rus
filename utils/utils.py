@@ -1,36 +1,40 @@
-import json
 import asyncpg
-import sqlite3
 import asyncio
+from database.new_data import data15
+from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 
-async def fill_db():
-    # Подключение к базе данных
-    conn = await asyncpg.connect(
-        user='postgres',
-        password='ozzy971',
-        database='sotka_po_rus_tasks',
-        host='localhost',  # Можно использовать "127.0.0.1" или "localhost"
-        port=5432  # Порт по умолчанию
+# Получаем подключение к базе данных
+async def get_pool():
+    return await asyncpg.create_pool(
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        host=DB_HOST,
+        port=DB_PORT
     )
 
-    # Чтение JSON
-    with open("../database/questions.json", "r", encoding="utf-8") as f:
-        questions = json.load(f)
+# Функция для вставки данных в таблицу
+async def insert_words_data(data, task_number):
+    pool = await get_pool()
 
-    for task_number, pairs in questions.items():
-        for pair in pairs:
-            correct = pair[0]
-            options = pair
+    # Данные для вставки
 
-            await conn.execute('''
-                INSERT INTO questions (task_number, answer_options, correct_answer)
-                VALUES ($1, $2, $3)
-            ''', int(task_number), options, correct)
+    async with pool.acquire() as conn:
+        # Вставка данных
+        for group in data:
+            for word_data in group:
+                word = word_data[0]  # Правильное слово
+                incorrect_words = word_data[1]  # Неверные варианты
+                await conn.execute("""
+                    INSERT INTO questions (task_number, correct_answer, answer_options) 
+                    VALUES ($1, $2, $3)
+                """, task_number, word, incorrect_words)
 
-    await conn.close()
+    print("Данные успешно вставлены!")
 
- #asyncio.run(fill_db())
+# Запуск скрипта
+async def main():
+    await insert_words_data()
 
-a ='dafs'
-b='dfas'
-print()
+if __name__ == "__main__":
+    asyncio.run(main())
