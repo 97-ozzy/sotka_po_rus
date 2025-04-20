@@ -27,7 +27,7 @@ async def init_dbs():
         await conn.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER,
+        user_id BIGINT,
         username TEXT,
         premium BOOLEAN DEFAULT FALSE,
         submission_count INTEGER DEFAULT 0,
@@ -37,7 +37,7 @@ async def init_dbs():
         await conn.execute('''
     CREATE TABLE IF NOT EXISTS word_submissions (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER,
+        user_id BIGINT,
         task_number INTEGER,
         correct_word TEXT,
         incorrect_words TEXT,

@@ -20,7 +20,8 @@ class AntiFloodMiddleware(BaseMiddleware):
         last_time = self.users_timestamps.get(user_id)
         if last_time and now - last_time < self.cooldown:
             wait_time = round(self.cooldown - (now - last_time), 1)
-            await event.answer(f"🕒 Подожди ещё {wait_time} сек.")
+            await event.answer(f"Пожалуйста подожди 🕒\n"
+                               f"Не делай много запросов 🥰")
             return None
 
         self.users_timestamps[user_id] = now

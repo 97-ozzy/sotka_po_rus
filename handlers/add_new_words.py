@@ -6,6 +6,9 @@ from config import ADMIN_IDS
 
 router = Router()
 
+import logging
+logger = logging.getLogger(__name__)
+
 @router.message(Command("add_new_words"))
 async def ask_to_migrate_words(message: Message):
     if message.from_user.id not in ADMIN_IDS:
@@ -46,6 +49,7 @@ async def ask_to_migrate_words(message: Message):
 
     await message.answer(text, reply_markup=kb)
 
+
 @router.callback_query(F.data == "confirm_migrate")
 async def confirm_migration(callback: CallbackQuery):
     user_id = callback.from_user.id
@@ -55,27 +59,42 @@ async def confirm_migration(callback: CallbackQuery):
 
     pool = await get_pool()
     async with pool.acquire() as conn:
-        submissions = await conn.fetch("""
-            SELECT task_number, correct_word, incorrect_words 
-            FROM word_submissions 
-            WHERE status = 'approved'
-        """)
+        try:
+            async with conn.transaction():  # Начинаем транзакцию
+                submissions = await conn.fetch(""" 
+                    SELECT task_number, correct_word, incorrect_words 
+                    FROM word_submissions 
+                    WHERE status = 'approved'
+                """)
 
-        count = 0
-        for sub in submissions:
-            answer_options = [sub['correct_word']] + sub['incorrect_words'].split(',')
-            await conn.execute("""
-                INSERT INTO questions (task_number, answer_options, correct_answer)
-                VALUES ($1, $2, $3)
-            """, sub['task_number'], answer_options , sub['correct_word'])
-            count += 1
+                count = 0
+                for sub in submissions:
+                    answer_options = [sub['correct_word']] + sub['incorrect_words'].split(',')
+                    try:
+                        await conn.execute(""" 
+                            INSERT INTO questions (task_number, answer_options, correct_answer) 
+                            VALUES ($1, $2, $3) 
+                        """, sub['task_number'], answer_options, sub['correct_word'])
+                        count += 1
+                    except Exception as e:
+                        logger.error(
+                            f"Не удалось добавить данные для задачи {sub['task_number']} в таблицу questions. Ошибка: {str(e)}")
+                        continue  # Переход к следующей записи
 
-        await conn.execute("""
-            DELETE FROM word_submissions 
-            WHERE status = 'approved'
-        """)
+                if count > 0:
+                    await conn.execute(""" 
+                        DELETE FROM word_submissions 
+                        WHERE status = 'approved' 
+                    """)
 
-    await callback.message.edit_text(f"✅ Перенос завершён. Добавлено {count} слов.")
+            # Если транзакция завершена без ошибок, сообщаем об успешной миграции
+            await callback.message.edit_text(f"✅ Перенос завершён. Добавлено {count} слов.")
+
+        except Exception as e:
+            # Логирование ошибки в случае проблем с транзакцией
+            logger.error(f"Ошибка при миграции данных: {str(e)}")
+            await callback.message.edit_text("❌ Произошла ошибка при переносе данных. Попробуйте снова.")
+
 
 @router.callback_query(F.data == "cancel_migrate")
 async def cancel_migration(callback: CallbackQuery):
