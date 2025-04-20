@@ -13,12 +13,16 @@ async def start(message: Message):
     username = message.from_user.username
     await add_user_to_db(user_id, username)
     await message.answer(
-        "Привет! Я помогу тебе подготовиться к ЕГЭ по русскому языку.\nВыбери команду:\n\n Приступить к практике - /practice",
+        "Выбери команду:\n "
+        "💪 Приступить к практике  - /practice\n"
+        "🆕 Добавить свое слоово  - /submit\n"
+        "ℹ️ Справка о боте - /help",
         reply_markup=ReplyKeyboardRemove())
 
 @router.message(Command("help"))
 async def help_info(message: Message):
-    await message.answer("Вопросы по русскому языку? Я помогу!")
+    await message.answer("Мы постоянно улучшаем бота.\n"
+                         "Новые номера, скоро будут доступны.")
 
 @router.message(Command("ac"))
 async def help_info(message: Message):

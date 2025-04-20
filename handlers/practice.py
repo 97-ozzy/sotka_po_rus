@@ -6,12 +6,14 @@ from aiogram.fsm.context import FSMContext
 from database.database import get_pool, get_random_task
 from fsm import Practice
 from handlers.base import start
+from aiogram.filters import Command
 from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
 
+
 router = Router()
 
-@router.message(F.text == "/practice")
+@router.message(Command("practice"))
 async def practice(message: Message):
     await message.answer("Выберите номер задания: \n"
                          "№4 - ударения\n"
