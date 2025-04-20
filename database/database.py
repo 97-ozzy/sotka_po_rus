@@ -52,14 +52,14 @@ async def get_random_task(pool, task_number: int):
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT options, correct_answer FROM questions WHERE task_number = $1",
+            "SELECT answer_options, correct_answer FROM questions WHERE task_number = $1",
             task_number
         )
 
         if not rows:
             return None
 
-        cache[task_number] = [(row['options'], row['correct_answer']) for row in rows]
+        cache[task_number] = [(row['answer_options'], row['correct_answer']) for row in rows]
         return random.choice(cache[task_number])
 
 

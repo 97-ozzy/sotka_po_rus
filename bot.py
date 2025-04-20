@@ -3,11 +3,8 @@ import asyncio
 
 from database.database import init_dbs
 from handlers import register_all_handlers
-import os
-from dotenv import load_dotenv
-load_dotenv('utils/.env')
 
-TOKEN = os.getenv("BOT_TOKEN")
+from config import TOKEN
 
 async def main():
     await init_dbs()

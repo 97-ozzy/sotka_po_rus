@@ -23,10 +23,14 @@ async def fill_db():
             options = pair
 
             await conn.execute('''
-                INSERT INTO questions (task_number, options, correct_answer)
+                INSERT INTO questions (task_number, answer_options, correct_answer)
                 VALUES ($1, $2, $3)
             ''', int(task_number), options, correct)
 
     await conn.close()
 
  #asyncio.run(fill_db())
+
+a ='dafs'
+b='dfas'
+print()
