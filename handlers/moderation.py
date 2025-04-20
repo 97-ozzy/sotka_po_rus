@@ -2,32 +2,14 @@ from aiogram import types, Router
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-import sqlite3
-
+from database.database import submit_new_word, approve_new_submission, reject_new_submission, \
+    get_pending_submission
 from fsm import Moderation
 from keyboards.inline_kb import moderation_keyboard
 
 router = Router()
 
 ADMIN_IDS = [936290830]
-
-DB_REQ = "database/requests.db"
-DB_USERS = "database/users.db"
-
-def get_pending_submission():
-    conn = sqlite3.connect(DB_REQ)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT id, task_number, correct_word, incorrect_words
-        FROM word_submissions
-        WHERE status = 'pending'
-        ORDER BY submission_time ASC
-        LIMIT 1
-    ''')
-    submission = cursor.fetchone()
-    conn.close()
-    return submission
 
 
 
@@ -36,8 +18,9 @@ async def submit_word(message: types.Message, state: FSMContext):
     await state.set_state(Moderation.waiting_for_word)
     await message.reply(
         "Пожалуйста, отправьте в формате:\n"
-        "номер_задания правильное_слово неправильные_написания\n"
-        "Например:\n9 брошюра брошура\n",
+        "(номер задания) (правильное слово) (неправильные написания)\n"
+        "Например:\n9 брошюра брошура\n"
+        "Например:\n4 киоскЕр киОскер\n",
         parse_mode="Markdown"
     )
 
@@ -69,20 +52,10 @@ async def process_submission(message: Message, state: FSMContext):
         return await message.reply(f"{str(e)}\nПопробуйте снова.")
 
     try:
-        conn = sqlite3.connect("database/requests.db")
-        cursor = conn.cursor()
-
-        # Добавляем заявку
-        cursor.execute('''
-            INSERT INTO word_submissions (user_id, task_number, correct_word, incorrect_words)
-            VALUES (?, ?, ?, ?)
-        ''', (user_id, task_number, correct_word, incorrect_words_str))
-
-        conn.commit()
-        conn.close()
+        await submit_new_word(user_id, task_number, correct_word, incorrect_words_str)
 
         await message.reply(
-            f"🔄️ Отправлено на модерацию:\n"
+            f"🔄️ Отправлено на модерацию\n"
             f"📚 Задание {task_number}: <b>{correct_word}</b>\n"
             f"❌ Ошибки: <i>{incorrect_words_str}</i>",
             parse_mode="HTML"
@@ -91,7 +64,7 @@ async def process_submission(message: Message, state: FSMContext):
         await message.reply(f"⚠️ Ошибка при сохранении: {str(e)}")
     finally:
         await state.clear()
-
+        
 
 
 @router.message(Command('moderate'))
@@ -99,51 +72,38 @@ async def start_moderation(message: Message, state: FSMContext):
     if message.from_user.id not in ADMIN_IDS:
         return await message.reply("⛔ У вас нет прав для модерации")
 
-    row = get_pending_submission()
+    row = await get_pending_submission()
     if not row:
         return await message.reply("ℹ️ Нет заявок на модерацию.")
 
     await state.set_state(Moderation.moderating)
     await send_submission_to_admin(message, row)
+    
+
 
 async def send_submission_to_admin(message: Message, row):
-    sub_id, task_number, correct_word, incorrect_words= row
+    sub_id, user_id, task_number, correct_word, incorrect_words= row
     
 
     text = (
-        f"📝 <b>Предложение #{sub_id}</b>\n"
+        f"📝 <b>Заявка #{sub_id}</b>\n"
         f"📚 Задание {task_number}\n"
         f"✅ <b>{correct_word}</b>\n"
         f"❌ <i>{incorrect_words}</i>"
     )
-    await message.answer(text, parse_mode="HTML", reply_markup=moderation_keyboard(sub_id))
+    await message.answer(text, parse_mode="HTML", reply_markup=moderation_keyboard(sub_id, user_id, correct_word))
 
 @router.callback_query(lambda c: c.data.startswith("approve_") or c.data.startswith("reject_"))
 async def handle_decision(callback: CallbackQuery, state: FSMContext):
     if callback.from_user.id not in ADMIN_IDS:
         return await callback.answer("⛔ Нет доступа")
-
-    action, sub_id = callback.data.split("_")
-    conn = sqlite3.connect(DB_REQ)
-    cursor = conn.cursor()
-    #print(sub_id)
-
-    cursor.execute('SELECT user_id, correct_word FROM word_submissions WHERE id = ?', (sub_id,))
-    row = cursor.fetchone()
-
-    if not row:
-        await callback.message.edit_text("❌ Заявка уже удалена.")
-        await state.clear()
-        return
-
-    user_id, correct_word = row
-
+    #print(callback.data.split("_"))
+    action, sub_id, user_id, correct_word = callback.data.split("_")
+    sub_id =int(sub_id)
+    user_id=int(user_id)
     if action == "approve":
-        connU = sqlite3.connect(DB_USERS)
-        connU.execute('UPDATE users SET submission_count = COALESCE(submission_count, 0) + 1 WHERE user_id = ?', (user_id,))
-        conn.execute("UPDATE word_submissions SET status = 'approved' WHERE id = ?", (sub_id))
-        connU.commit()
-        connU.close()
+
+        await approve_new_submission(user_id, sub_id)
         try:
             await callback.bot.send_message(user_id,
                 f"✅ Ваше слово *{correct_word}* принято и добавлено!",
@@ -151,7 +111,6 @@ async def handle_decision(callback: CallbackQuery, state: FSMContext):
             )
         except:
             pass  # user might block the bot
-
     else:
         try:
             await callback.bot.send_message(user_id,
@@ -160,15 +119,13 @@ async def handle_decision(callback: CallbackQuery, state: FSMContext):
             )
         except:
             pass
-        cursor.execute('DELETE FROM word_submissions WHERE id = ?', (sub_id,))
-    conn.commit()
-    conn.close()
+        await reject_new_submission(sub_id)
 
     await callback.message.edit_text("✅ Заявка обработана.")
     await callback.answer()
 
     # Показываем следующую заявку
-    next_row = get_pending_submission()
+    next_row = await get_pending_submission()
     if next_row:
         await send_submission_to_admin(callback.message, next_row)
     else:

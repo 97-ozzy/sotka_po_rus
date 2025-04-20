@@ -1,41 +1,5 @@
 import asyncpg
 import random
-import sqlite3
-
-
-def init_dbs():
-    conn = sqlite3.connect("requests.db")
-    cursor = conn.cursor()
-
-
-    # Create submissions table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS word_submissions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        task_number INTEGER,
-        correct_word TEXT,
-        incorrect_words TEXT,
-        status TEXT DEFAULT 'pending',
-        submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-
-    conn.commit()
-    conn.close()
-
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY,
-                username TEXT,
-                premium BOOLEAN DEFAULT FALSE,
-                registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            ''')
-    conn.commit()
-    conn.close()
 
 cache = {}
 
@@ -57,8 +21,32 @@ async def get_pool():
 
 
 
-async def load_task(pool, task_number: int):
-    #print('asdf')
+async def init_dbs():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        username TEXT,
+        premium BOOLEAN DEFAULT FALSE,
+        submission_count INTEGER DEFAULT 0,
+        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+""")
+        await conn.execute('''
+    CREATE TABLE IF NOT EXISTS word_submissions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        task_number INTEGER,
+        correct_word TEXT,
+        incorrect_words TEXT,
+        status TEXT DEFAULT 'pending',
+        submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    ''')
+
+async def get_random_task(pool, task_number: int):
     if task_number in cache:
         return random.choice(cache[task_number])
 
@@ -75,22 +63,42 @@ async def load_task(pool, task_number: int):
         return random.choice(cache[task_number])
 
 
+async def add_user_to_db(user_id: int, username):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+            INSERT INTO users (user_id, username)
+            VALUES ($1, $2)
+        ''', user_id, username)
 
-def add_user_to_db(user_id: int):
-    conn = sqlite3.connect("database/users.db")  # укажи имя своей базы
-    cursor = conn.cursor()
+async def submit_new_word(user_id, task_number, correct_word, incorrect_words_str):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+            INSERT INTO word_submissions (user_id, task_number, correct_word, incorrect_words)
+            VALUES ($1, $2, $3, $4)
+        ''', user_id, task_number, correct_word, incorrect_words_str)
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            premium BOOLEAN DEFAULT FALSE
-        )
-    ''')
+async def get_pending_submission():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row =  await conn.fetchrow('''
+            SELECT id, user_id, task_number, correct_word, incorrect_words
+            FROM word_submissions
+            WHERE status = 'pending'
+            ORDER BY submission_time ASC
+            LIMIT 1
+        ''')
+        return row
 
-    cursor.execute('''
-        INSERT OR IGNORE INTO users (user_id)
-        VALUES (?)
-    ''', (user_id,))
 
-    conn.commit()
-    conn.close()
+async def approve_new_submission(user_id:int, sub_id:int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('UPDATE users SET submission_count = COALESCE(submission_count, 0) + 1 WHERE user_id = $1',user_id)
+        await conn.execute("UPDATE word_submissions SET status = 'approved' WHERE id = $1", sub_id)
+
+async def reject_new_submission(sub_id:int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('DELETE FROM word_submissions WHERE id = $1', sub_id)

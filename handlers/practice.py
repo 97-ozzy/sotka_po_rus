@@ -4,7 +4,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 
-from database.database import get_pool, load_task
+from database.database import get_pool, get_random_task
 from fsm import Practice
 from handlers.base import start
 from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard
@@ -23,7 +23,7 @@ async def practice(message: Message):
 async def choose_task(callback: CallbackQuery, state: FSMContext):
     task_number = int(callback.data.split("_")[1])
     pool = await get_pool()
-    result = await load_task(pool, task_number)
+    result = await get_random_task(pool, task_number)
 
     if not result:
         await callback.answer("Задание не найдено.")
@@ -51,7 +51,7 @@ async def handle_answer(message: Message, state: FSMContext):
 
     if user_choice == correct_answer:
         pool = await get_pool()
-        result = await load_task(pool, task_number)
+        result = await get_random_task(pool, task_number)
         options, correct = result
         shuffled_options = options.copy()
         random.shuffle(shuffled_options)
@@ -75,7 +75,7 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
         return
 
     pool = await get_pool()
-    result = await load_task(pool, task_number)
+    result = await get_random_task(pool, task_number)
     options, correct = result
     shuffled_options = options.copy()
     random.shuffle(shuffled_options)
