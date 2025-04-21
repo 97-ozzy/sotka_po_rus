@@ -22,7 +22,7 @@ async def submit_word(message: types.Message, state: FSMContext):
 @router.message(Moderation.waiting_for_word)
 async def process_submission(message: Message, state: FSMContext):
     user_id = message.from_user.id
-    content = message.text.strip()
+    content = message.text.strip().lower()
 
     try:
         parts = content.split()

@@ -15,19 +15,14 @@ async def start(message: Message):
     await message.answer(
         "Выбери команду:\n "
         "💪 Приступить к практике  - /practice\n"
-        "🆕 Добавить свое слоово  - /submit\n"
+        "🆕 Добавить свое слово  - /submit\n\n"
+        "✉️ Написать в поддержку - /support\n"
         "ℹ️ Справка о боте - /help",
         reply_markup=ReplyKeyboardRemove())
 
 @router.message(Command("help"))
 async def help_info(message: Message):
     await message.answer("Мы постоянно улучшаем бота.\n"
-                         "Новые номера, скоро будут доступны.")
-
-@router.message(Command("ac"))
-async def help_info(message: Message):
-    if message.from_user.id not in ADMIN_IDS:
-        return await message.answer("⛔ Нет доступа")
-    await message.answer("/moderate\n\n"
-                         "/add_new_words\n\n"
-                         "/edit_words")
+                         "Новые номера, скоро будут доступны.\n\n"
+                         "Если нашли ошибку или есть пожелания, "
+                         "что можно добавить в бота нажмите на: /practice")

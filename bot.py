@@ -19,8 +19,11 @@ async def main():
     dp.message.middleware(AntiFloodMiddleware(cooldown_seconds=0.6))
     dp.update.middleware(ErrorHandlerMiddleware(bot, ADMIN_IDS))
 
+    await bot.delete_webhook(drop_pending_updates=True)
+
     register_all_handlers(dp)
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, skip_updates=True)
+
 
 if __name__ == "__main__":
     setup_logging()

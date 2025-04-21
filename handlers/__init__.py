@@ -1,21 +1,17 @@
 from .base import router as base_router
 from .practice import router as practice_router
-from .moderation import router as moderation_router
-from .submit_word import router as submit_word
+from .submit_word import router as submit_word_router
 from .premium import router as premium_router
 from .leaderboard import router as leaderboard_router
-from .add_new_words import router as add_new_words
-from .edit_words import router as edit_words
+from .support import router as support_router
 
 all_handlers = [
     base_router,
     practice_router,
-    submit_word,
-    moderation_router,
+    submit_word_router,
     premium_router,
     leaderboard_router,
-    add_new_words,
-    edit_words
+    support_router
 ]
 
 def register_all_handlers(dp):

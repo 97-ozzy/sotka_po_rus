@@ -45,6 +45,14 @@ async def init_dbs():
         submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     ''')
+        await conn.execute('''
+        CREATE TABLE IF NOT EXISTS support_messages (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            message TEXT NOT NULL,
+            date TIMESTAMP NOT NULL,
+            is_viewed BOOLEAN DEFAULT FALSE
+    );''')
 
 async def get_random_task(pool, task_number: int):
     if task_number in cache:
