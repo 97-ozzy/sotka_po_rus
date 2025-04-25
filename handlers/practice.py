@@ -18,7 +18,10 @@ async def practice(message: Message):
                          "№4 - ударения\n"
                          "№9 - гласные в корне\n"
                          "№10 - приставки\n"
+                         "№11 - суффиксы \n"
                          "№12 - глаголы\n"
+                         "№13 - НЕ слитно или раздельно\n"
+                         "№14 - слитно или раздельно\n"
                          "№15 - Н и НН", reply_markup=task_keyboard())
 
 @router.callback_query(F.data.startswith("task_"))
@@ -60,7 +63,7 @@ async def handle_answer(message: Message, state: FSMContext):
         random.shuffle(options)
         await state.update_data(correct=correct, streak=streak + 1)
 
-        label = f'✅ Верно!\n{question}' if task_number != 4 else '✅ Верно!'
+        label = f'✅ Верно!\n\n{question}' if task_number != 4 else '✅ Верно!'
 
         await message.answer(label, reply_markup=answer_keyboard(options))
 

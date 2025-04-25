@@ -14,13 +14,13 @@ router = Router()
 async def submit_word(message: types.Message, state: FSMContext):
     await state.set_state(Moderation.waiting_for_word)
     await message.reply(
-        "Предлагайте свои слова для заданий 9 - 15\n"
-        "Пожалуйста, отправьте в формате:\n"
-        "<номер задания>.<правильное слово>.<неправильное слово>\n\n"
-        "Например:\n"
-        "9.брошюра.брошура\n"
-        "12.придать (форму).предать (форму)\n"
-        "Чтоб выйти нажмите - /start",
+        "📝 *Предлагайте свои слова для заданий 9-15*\n\n"
+    "Пожалуйста, отправьте слово в формате:\n"
+    "`<номер задания>.<правильное слово>.<неправильное слово>`\n\n"
+    "*Примеры:*\n"
+    "• `9.брошюра.брошура`\n"
+    "• `12.придать (форму).предать (форму)`\n\n"
+    "_(Для выхода нажмите /start)_",
         parse_mode="Markdown"
     )
 
@@ -55,6 +55,7 @@ async def process_submission(message: Message, state: FSMContext):
             f"📚 Задание {task_number}: <b>{correct_word}</b>\n",
             parse_mode="HTML"
         )
+        await message.answer('Спасибо')
     except Exception as e:
         await message.reply(f"⚠️ Ошибка при сохранении: {str(e)}")
     finally:

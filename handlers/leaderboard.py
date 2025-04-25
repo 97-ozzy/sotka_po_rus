@@ -6,4 +6,4 @@ router = Router()
 
 @router.message(Command("leaderboard"))
 async def leaderboard(message: Message):
-    await message.answer("Таблица лидеров: (запроси на сервере)")
+    await message.answer("Ждите обновления... 🤫")
