@@ -1,8 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+from config import TASKS
+
+
 def task_keyboard():
     inline_keyboard = []
-    tasks= [4, 9, 10, 12, 15]
+    tasks= TASKS
     row = []
     for i, num in enumerate(tasks, 1):
         row.append(InlineKeyboardButton(text=f"№{num}", callback_data=f"task_{num}"))

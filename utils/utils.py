@@ -1,6 +1,5 @@
 import asyncpg
 import asyncio
-from database.new_data import data
 from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 
 # Получаем подключение к базе данных

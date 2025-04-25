@@ -2,6 +2,8 @@ from aiogram import types, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
+
+from config import TASKS
 from database.database import submit_new_word
 from fsm import Moderation
 from handlers.base import start
@@ -14,7 +16,10 @@ async def submit_word(message: types.Message, state: FSMContext):
     await message.reply(
         "Предлагайте свои слова для заданий 9 - 15\n"
         "Пожалуйста, отправьте в формате:\n"
-        "9 брошюра брошура\n\n"
+        "<номер задания>.<правильное слово>.<неправильное слово>\n\n"
+        "Например:\n"
+        "9.брошюра.брошура\n"
+        "12.придать (форму).предать (форму)\n"
         "Чтоб выйти нажмите - /start",
         parse_mode="Markdown"
     )
@@ -25,29 +30,25 @@ async def process_submission(message: Message, state: FSMContext):
     content = message.text.strip().lower()
 
     try:
-        parts = content.split()
+        parts = content.split('.')
         if len(parts) < 3:
-            raise ValueError("❗ Недостаточно данных: укажите номер задания, правильное слово и хотя бы одно неправильное.")
+            raise ValueError("❗ Формат должен быть: <номер задания>.<правильное слово>.<неправильное слово>")
 
-        task_number = int(parts[0])
-        correct_word = parts[1]
-        incorrect_words_raw = ' '.join(parts[2:])
-        incorrect_words = [w.strip() for w in incorrect_words_raw.replace(',', ' ').split()]
+        task_number = int(parts[0].strip())
+        correct_word = parts[1].strip()
+        wrong_word = parts[2].strip()
 
-        if not correct_word.isalpha():
-            raise ValueError("❗ Правильное слово должно содержать только буквы.")
+        if task_number not in TASKS:
+            raise ValueError("❗ Номер задания должен быть одним из: 4, 9, 10, 11, 12, 13, 14, 15")
 
-        for word in incorrect_words:
-            if not word.isalpha():
-                raise ValueError(f"❗ Недопустимый вариант: '{word}' — только буквы.")
-
-        incorrect_words_str = ','.join(incorrect_words)
+        if correct_word == wrong_word:
+            raise ValueError("❗ Слова должны отличаться друг от друга.")
 
     except ValueError as e:
         return await message.reply(f"{str(e)}\nПопробуйте снова.")
 
     try:
-        await submit_new_word(user_id, task_number, correct_word, incorrect_words_str)
+        await submit_new_word(user_id, task_number, correct_word, wrong_word)
 
         await message.reply(
             f"🔄️ Отправлено на модерацию\n"

@@ -83,13 +83,13 @@ async def add_user_to_db(user_id: int, username: str):
                 user_id, username
             )
 
-async def submit_new_word(user_id, task_number, correct_word, incorrect_words_str):
+async def submit_new_word(user_id, task_number, correct_word, wrong_word):
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute('''
-            INSERT INTO word_submissions (user_id, task_number, correct_word, incorrect_words)
+            INSERT INTO word_submissions (user_id, task_number, correct_word, wrong_word)
             VALUES ($1, $2, $3, $4)
-        ''', user_id, task_number, correct_word, incorrect_words_str)
+        ''', user_id, task_number, correct_word, wrong_word)
 
 async def get_pending_submission():
     pool = await get_pool()
