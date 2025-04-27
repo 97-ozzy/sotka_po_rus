@@ -17,7 +17,8 @@ async def start(message: Message):
         "📚 *Каждое новое добавленное слово улучшает твою подготовку!*\n\n"
         #"Выбери команду:\n "
         "💪 Приступить к практике  - /practice\n"
-        "🆕 Добавить свое слово  - /submit\n\n"
+        "🆕 Добавить свое слово  - /submit\n"
+        "🏆Таблица лидеров - /leaderboard\n\n"
         "✉️ Написать в поддержку - /support\n"
         "ℹ️ Справка о боте - /help",
         parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())

@@ -31,7 +31,8 @@ async def init_dbs():
         username TEXT,
         premium BOOLEAN DEFAULT FALSE,
         submission_count INTEGER DEFAULT 0,
-        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        premium_expires TEXT DEFAULT '0'
     );
 """)
         await conn.execute('''
@@ -40,7 +41,7 @@ async def init_dbs():
         user_id BIGINT,
         task_number INTEGER,
         correct_word TEXT,
-        incorrect_words TEXT,
+        wrong_words TEXT,
         status TEXT DEFAULT 'pending',
         submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -53,6 +54,18 @@ async def init_dbs():
             date TIMESTAMP NOT NULL,
             is_viewed BOOLEAN DEFAULT FALSE
     );''')
+        await conn.execute('''
+        CREATE TABLE IF NOT EXISTS user_task_stats (
+            user_id BIGINT NOT NULL,
+            username TEXT,
+            task_number INT NOT NULL,
+            total_attempts INT DEFAULT 0,
+            correct_attempts INT DEFAULT 0,
+            longest_streak INT DEFAULT 0,
+            PRIMARY KEY (user_id, task_number)
+    );''')
+
+
 
 async def get_random_task(pool, task_number: int):
     if task_number in cache:

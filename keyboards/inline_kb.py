@@ -3,12 +3,12 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import TASKS
 
 
-def task_keyboard():
+def task_keyboard(type):
     inline_keyboard = []
     tasks= TASKS
     row = []
     for i, num in enumerate(tasks, 1):
-        row.append(InlineKeyboardButton(text=f"№{num}", callback_data=f"task_{num}"))
+        row.append(InlineKeyboardButton(text=f"№{num}", callback_data=f"{type}_task_{num}"))
         if i % 3 == 0:
             inline_keyboard.append(row)
             row = []
@@ -20,6 +20,7 @@ def task_keyboard():
 def wrong_answer_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔁 Начать заново", callback_data="repeat_task")],
+        [InlineKeyboardButton(text="🆕 Выбрать другое задание", callback_data="practice")],
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
     ])
 

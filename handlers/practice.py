@@ -22,11 +22,11 @@ async def practice(message: Message):
                          "№12 - глаголы\n"
                          "№13 - НЕ слитно или раздельно\n"
                          "№14 - слитно или раздельно\n"
-                         "№15 - Н и НН", reply_markup=task_keyboard())
+                         "№15 - Н и НН", reply_markup=task_keyboard('practice'))
 
-@router.callback_query(F.data.startswith("task_"))
+@router.callback_query(F.data.startswith("practice_task_"))
 async def choose_task(callback: CallbackQuery, state: FSMContext):
-    task_number = int(callback.data.split("_")[1])
+    task_number = int(callback.data.split("_")[2])
     pool = await get_pool()
     result = await get_random_task(pool, task_number)
 
@@ -53,9 +53,9 @@ async def handle_answer(message: Message, state: FSMContext):
     correct_answer = data["correct"]
     user_choice = message.text.strip()
     streak = data.get("streak", 0)
-
+    pool = await get_pool()
     if user_choice == correct_answer:
-        pool = await get_pool()
+
         result = await get_random_task(pool, task_number)
 
         question, correct, wrong = result
@@ -68,9 +68,41 @@ async def handle_answer(message: Message, state: FSMContext):
         await message.answer(label, reply_markup=answer_keyboard(options))
 
     else:
-        await message.answer("❌ Неверно.", reply_markup=ReplyKeyboardRemove())
-        await message.answer(f"Правильный ответ: {correct_answer}\nПравильно подряд: {streak}",
-                             reply_markup=wrong_answer_keyboard())
+        user_id = message.from_user.username
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_task_stats (user_id, task_number, total_attempts, correct_attempts, longest_streak, username)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id, task_number) DO UPDATE
+                SET 
+                    total_attempts = user_task_stats.total_attempts + $3,
+                    correct_attempts = user_task_stats.correct_attempts + $4,
+                    longest_streak = GREATEST(user_task_stats.longest_streak, $5)
+                ;
+                """,
+                message.from_user.id, task_number, streak + 1, streak, streak, user_id
+            )
+
+        longest_streak_in_db = await pool.fetchval(
+            """
+            SELECT longest_streak FROM user_task_stats
+            WHERE user_id = $1 AND task_number = $2;
+            """,
+            message.from_user.id, task_number
+        )
+
+        if streak >= longest_streak_in_db:
+            record_text = "\n🏆 Новый рекорд подряд правильных ответов!"
+        else:
+            record_text = ""
+
+        await message.answer(
+            f"❌ Неверно.\n\nПравильный ответ: {correct_answer}\n"
+            f"Правильных подряд: {streak}{record_text}",
+            reply_markup=wrong_answer_keyboard()
+        )
+
         await state.update_data(streak=0)
         await state.set_state(Practice.waiting_restart)
 
@@ -84,13 +116,14 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
     result = await get_random_task(pool, task_number)
 
     question, correct, wrong = result
+    #print(question, type(question))
     await state.update_data(correct=correct)
     await state.set_state(Practice.answering)
 
     options = [correct, wrong]
     random.shuffle(options)
 
-    label = f"Что вставить вместо пропуска\n\n {question}" if task_number != 4 else "Выберите слово с правильным ударением:"
+    label = f"Что вставить вместо пропуска\n\n {question}" if task_number !=4 else "Выберите слово с правильным ударением:"
 
     await callback.message.answer(label, reply_markup=answer_keyboard(options))
 
@@ -98,3 +131,8 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
 async def to_menu(callback: CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=None)
     await start(callback.message)
+
+@router.callback_query(F.data == "practice")
+async def select_another_task(callback: CallbackQuery):
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await practice(callback.message)
