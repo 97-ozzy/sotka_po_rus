@@ -39,4 +39,4 @@ async def help_info(message: Message):
         "• Или у вас есть вопросы ❓\n\n"
         "Нажмите: /support\n"
         "_Мы всегда рады обратной связи!_\n"
-        "_(Для выхода нажмите /start)_", parse_mode="Markdown")
+        "_(Для выхода нажмите /menu)_", parse_mode="Markdown")

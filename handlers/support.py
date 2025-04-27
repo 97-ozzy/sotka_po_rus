@@ -13,7 +13,7 @@ router = Router()
 @router.message(Command("support"))
 async def start_support(message: Message, state: FSMContext):
     await message.answer("✉️ Напишите своё сообщение, и мы обязательно прочитаем его!\n"
-                         "_(Для выхода нажмите /start)_", parse_mode='Markdown')
+                         "_(Для выхода нажмите /menu)_", parse_mode='Markdown')
     await state.set_state(SupportStates.waiting_for_message)
 
 @router.message(SupportStates.waiting_for_message)

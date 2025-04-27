@@ -22,7 +22,7 @@ async def submit_word(message: types.Message, state: FSMContext):
         "`9.кастрюля.кострюля`\n"
         "`10.придать (форму).предать (форму)`\n"
         "`12.просит.просет`\n\n"
-        "_(Для выхода нажмите /start)_",
+        "_(Для выхода нажмите /menu)_",
         parse_mode="Markdown"
     )
 

@@ -16,8 +16,8 @@ async def check_cache_clear_flag():
         if os.path.exists(FLAG_FILE_PATH):
             await clear_cache()
             os.remove(FLAG_FILE_PATH)
-            print("Файл флаг очищен, кэш был очищен.")
-        await asyncio.sleep(30)
+            #print("Файл флаг очищен, кэш был очищен.")
+        await asyncio.sleep(3600)
 
 
 
