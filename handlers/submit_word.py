@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from config import TASKS
 from database.database import submit_new_word
 from fsm import Moderation
-from handlers.base import start
+from handlers.base import menu
 
 router = Router()
 
@@ -16,11 +16,12 @@ async def submit_word(message: types.Message, state: FSMContext):
     await state.set_state(Moderation.waiting_for_word)
     await message.reply(
         "📝 *Предлагайте свои слова для заданий 9-15*\n\n"
-        "Пожалуйста, отправьте слова в формате:\n"
+        "Пожалуйста, отправьте слова (можно несколько за один раз) в формате:\n"
         "`<номер задания>.<правильное слово>.<неправильное слово>`\n\n"
         "*Примеры:*\n"
-        "`9.брошюра.брошура`\n"
-        "`12.придать (форму).предать (форму)`\n\n"
+        "`9.кастрюля.кострюля`\n"
+        "`10.придать (форму).предать (форму)`\n"
+        "`12.просит.просет`\n\n"
         "_(Для выхода нажмите /start)_",
         parse_mode="Markdown"
     )
@@ -77,4 +78,4 @@ async def process_submission(message: Message, state: FSMContext):
 
     # Clear the state and go back to the main menu
     await state.clear()
-    await start(message)
+    await menu(message)

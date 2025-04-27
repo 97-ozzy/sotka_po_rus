@@ -2,6 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from database.database import get_pool
+from handlers.base import menu
 from keyboards.inline_kb import task_keyboard
 
 router = Router()
@@ -40,3 +41,4 @@ async def show_leaderboard(callback: CallbackQuery):
         await callback.message.answer(leaderboard_text)
 
     await callback.answer()
+    #await menu(callback.message)

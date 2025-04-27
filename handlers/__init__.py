@@ -4,6 +4,7 @@ from .submit_word import router as submit_word_router
 from .premium import router as premium_router
 from .leaderboard import router as leaderboard_router
 from .support import router as support_router
+from .stats import router as stats
 
 all_handlers = [
     base_router,
@@ -11,7 +12,8 @@ all_handlers = [
     submit_word_router,
     premium_router,
     leaderboard_router,
-    support_router
+    support_router,
+    stats
 ]
 
 def register_all_handlers(dp):

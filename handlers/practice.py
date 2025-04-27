@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from database.database import get_pool, get_random_task
 from fsm import Practice
-from handlers.base import start
+from handlers.base import menu
 from aiogram.filters import Command
 from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
@@ -130,7 +130,7 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "menu")
 async def to_menu(callback: CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=None)
-    await start(callback.message)
+    await menu(callback.message)
 
 @router.callback_query(F.data == "practice")
 async def select_another_task(callback: CallbackQuery):
