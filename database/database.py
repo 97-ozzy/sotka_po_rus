@@ -1,7 +1,25 @@
+import asyncio
+import os
+
 import asyncpg
 import random
-from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD
+from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD, FLAG_FILE_PATH
+
 cache ={}
+
+async def clear_cache():
+    global cache
+    cache.clear()
+
+async def check_cache_clear_flag():
+    while True:
+        if os.path.exists(FLAG_FILE_PATH):
+            await clear_cache()
+            os.remove(FLAG_FILE_PATH)
+            print("Файл флаг очищен, кэш был очищен.")
+        await asyncio.sleep(30)
+
+
 
 _pool = None
 

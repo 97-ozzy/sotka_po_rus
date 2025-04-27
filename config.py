@@ -11,8 +11,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
-BACKUP_DIR = os.getenv("BACKUP_DIR", "./backups")
 
+FLAG_FILE_PATH = 'database/cache_clear_flag.txt'
 
 ADMIN_IDS = os.getenv("ADMIN_IDS")
 ADMIN_IDS = ADMIN_IDS.split(',')

@@ -2,7 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from middlewares.antiflood import AntiFloodMiddleware
 from middlewares.error_handler import ErrorHandlerMiddleware
-from database.database import init_dbs
+from database.database import init_dbs, check_cache_clear_flag
 from handlers import register_all_handlers
 from config import TOKEN, ADMIN_IDS
 from logs.logging_config import setup_logging
@@ -13,6 +13,8 @@ async def setup_bot():
 
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
+
+    asyncio.create_task(check_cache_clear_flag())
 
     dp.message.middleware(AntiFloodMiddleware(cooldown_seconds=0.6))
     dp.update.middleware(ErrorHandlerMiddleware(bot, ADMIN_IDS))

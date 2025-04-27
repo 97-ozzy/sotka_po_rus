@@ -33,9 +33,8 @@ async def process_submission(message: Message, state: FSMContext):
     content = message.text.strip().lower()
 
     submissions = content.split('\n')  # Split the message by newlines to support multiple submissions
-    successful_submissions = []
+    successful_submissions = 0
     failed_submissions = []
-    submitted_words_count =len(submissions)
 
     for submission in submissions:
         try:
@@ -55,17 +54,16 @@ async def process_submission(message: Message, state: FSMContext):
 
             # Submit the valid word pair
             await submit_new_word(user_id, task_number, correct_word, wrong_word)
-            #successful_submissions.append(f"Задание {task_number}: <b>{correct_word}</b> → <b>{wrong_word}</b>")
-
+            successful_submissions+=1
         except ValueError as e:
             failed_submissions.append(f"{submission}: {str(e)}")
         except Exception as e:
             failed_submissions.append(f"{submission}: ⚠️ Ошибка при сохранении: {str(e)}")
 
     # Send feedback for successful submissions
-    if successful_submissions:
+    if successful_submissions > 0:
         await message.reply(
-            f"🔄️ Отправлено на модерацию: {submitted_words_count} слов",
+            f"🔄️ Отправлено на модерацию: {successful_submissions} слов",
             parse_mode="HTML"
         )
 
