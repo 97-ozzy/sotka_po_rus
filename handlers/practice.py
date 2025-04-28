@@ -7,7 +7,7 @@ from database.database import get_pool, get_random_task
 from fsm import Practice
 from handlers.base import menu
 from aiogram.filters import Command
-from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard
+from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, premium_wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
 
 router = Router()
@@ -98,10 +98,12 @@ async def handle_answer(message: Message, state: FSMContext):
             record_text = ""
 
         await message.answer(
-            f"❌ Неверно.\n\nПравильный ответ: {correct_answer}\n"
-            f"Правильных подряд: {streak}{record_text}",
-            reply_markup=wrong_answer_keyboard()
+            "❌ Неверно",
+            reply_markup=ReplyKeyboardRemove()
         )
+        text = (f"Правильный ответ: {correct_answer}\n"
+                f"Правильных подряд: {streak}{record_text}")
+        await message.answer(text, reply_markup= wrong_answer_keyboard())
 
         await state.update_data(streak=0)
         await state.set_state(Practice.waiting_restart)
@@ -136,3 +138,10 @@ async def to_menu(callback: CallbackQuery):
 async def select_another_task(callback: CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=None)
     await practice(callback.message)
+
+#@router.callback_query(F.data == "explain")
+#async def select_another_task(callback: CallbackQuery):
+#    text = F.data.split('_')[1]
+#    text+=
+#    await callback.message.edit_reply_markup(reply_markup=wrong_answer_keyboard())
+#    await callback.message.edit_text(text)

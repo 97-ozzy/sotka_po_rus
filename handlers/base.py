@@ -22,9 +22,10 @@ async def menu(message: Message):
         "📚 *Каждое новое добавленное слово улучшает твою подготовку!*\n\n"
         #"Выбери команду:\n "
         "💪 Приступить к практике  - /practice\n"
-        "🆕 Добавить свое слово  - /submit\n"
+        "🆕 Добавить свои слова  - /submit\n"
         "📊 Моя статистика  - /stats\n"
         "🏆Таблица лидеров - /leaderboard\n\n"
+        "💎 Премиум-возможности - /premium\n"
         "✉️ Написать в поддержку - /support\n"
         "ℹ️ Справка о боте - /help",
         parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
@@ -33,6 +34,7 @@ async def menu(message: Message):
 async def help_info(message: Message):
     await message.answer("✨ *Мы постоянно улучшаем бота!*\n\n"
         "Новые задания скоро появятся — следите за обновлениями.\n\n"
+        "Хотите поддержать проект нажмите /premium"
         "Если вы:\n"
         "• Нашли ошибку ❌\n"
         "• Хотите предложить идею 💡\n"

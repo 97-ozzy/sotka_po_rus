@@ -17,5 +17,5 @@ FLAG_FILE_PATH = 'database/cache_clear_flag.txt'
 ADMIN_IDS = os.getenv("ADMIN_IDS")
 ADMIN_IDS = ADMIN_IDS.split(',')
 ADMIN_IDS = [ int(admin_id) for admin_id in ADMIN_IDS]
-TASKS = [4, 9, 10, 11, 12, 13, 14, 15]
+TASKS = [4, 9, 10, 11, 12, 15]
 
