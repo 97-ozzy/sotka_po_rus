@@ -25,7 +25,6 @@ async def practice(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("task_"))
 async def choose_task(callback: CallbackQuery, state: FSMContext):
     task_number = int(callback.data.split("_")[1])
-    print(task_number)
     pool = await get_pool()
     result = await get_random_task(pool, task_number)
 
@@ -51,7 +50,7 @@ async def handle_answer(message: Message, state: FSMContext):
     task_number = data["task_number"]
     task_id = data['task_id']
     correct_answer = data["correct"]
-    user_choice = message.text.strip()
+    user_choice = message.text.strip().lower() if task_number !=4 else message.text.strip()
     streak = data.get("streak", 0)
     pool = await get_pool()
     if user_choice == correct_answer:
