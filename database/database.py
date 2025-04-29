@@ -121,27 +121,3 @@ async def submit_new_word(user_id, task_number, correct_word, wrong_word):
             INSERT INTO word_submissions (user_id, task_number, correct_word, wrong_word)
             VALUES ($1, $2, $3, $4)
         ''', user_id, task_number, correct_word, wrong_word)
-
-async def get_pending_submission():
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        row =  await conn.fetchrow('''
-            SELECT id, user_id, task_number, correct_word, incorrect_words
-            FROM word_submissions
-            WHERE status = 'pending'
-            ORDER BY submission_time ASC
-            LIMIT 1
-        ''')
-        return row
-
-
-async def approve_new_submission(user_id:int, sub_id:int):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('UPDATE users SET submission_count = COALESCE(submission_count, 0) + 1 WHERE user_id = $1',user_id)
-        await conn.execute("UPDATE word_submissions SET status = 'approved' WHERE id = $1", sub_id)
-
-async def reject_new_submission(sub_id:int):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('DELETE FROM word_submissions WHERE id = $1', sub_id)

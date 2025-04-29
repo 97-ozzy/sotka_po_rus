@@ -5,16 +5,14 @@ from aiogram.fsm.context import FSMContext
 
 from database.database import get_pool, get_random_task
 from fsm import Practice
-from handlers.base import menu
-from aiogram.filters import Command
 from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, premium_wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
 
 router = Router()
 
-@router.message(Command("practice"))
-async def practice(message: Message):
-    await message.answer("Выберите номер задания: \n"
+@router.callback_query(F.data == 'start_practice')
+async def practice(callback: CallbackQuery):
+    await callback.message.edit_text("Выберите номер задания: \n"
                          "№4 - ударения\n"
                          "№9 - гласные в корне\n"
                          "№10 - приставки\n"
@@ -22,11 +20,12 @@ async def practice(message: Message):
                          "№12 - глаголы\n"
                          "№13 - НЕ слитно или раздельно\n"
                          "№14 - слитно или раздельно\n"
-                         "№15 - Н и НН", reply_markup=task_keyboard('practice'))
+                         "№15 - Н и НН", reply_markup=task_keyboard())
 
-@router.callback_query(F.data.startswith("practice_task_"))
+@router.callback_query(F.data.startswith("task_"))
 async def choose_task(callback: CallbackQuery, state: FSMContext):
-    task_number = int(callback.data.split("_")[2])
+    task_number = int(callback.data.split("_")[1])
+    print(task_number)
     pool = await get_pool()
     result = await get_random_task(pool, task_number)
 
@@ -99,9 +98,7 @@ async def handle_answer(message: Message, state: FSMContext):
             record_text = ""
 
         await message.answer(
-            "❌ Неверно",
-            reply_markup=ReplyKeyboardRemove()
-        )
+            "❌ Неверно", reply_markup=ReplyKeyboardRemove())
         text = (f"Правильный ответ: {correct_answer}\n\n"
                 f"Правильных подряд: {streak}{record_text}\n")
         await message.answer(text, reply_markup= premium_wrong_answer_keyboard(task_id))
@@ -130,16 +127,13 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.answer(label, reply_markup=answer_keyboard(options))
 
-@router.callback_query(F.data == "menu")
-async def to_menu(callback: CallbackQuery):
-    await callback.message.edit_reply_markup(reply_markup=None)
-    await menu(callback.message)
+
 
 @router.callback_query(F.data == "practice")
 async def select_another_task(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_reply_markup(reply_markup=None)
     await state.clear()
-    await practice(callback.message)
+    await practice(callback)
 
 
 @router.callback_query(F.data.startswith("explain_"))
@@ -159,4 +153,3 @@ async def select_another_task(callback: CallbackQuery):
 
     await callback.answer()
     await callback.message.edit_text(new_text, reply_markup=wrong_answer_keyboard(), parse_mode='Markdown')
-

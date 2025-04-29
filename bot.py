@@ -9,14 +9,14 @@ from logs.logging_config import setup_logging
 
 
 async def setup_bot():
-    await init_dbs()
+    #await init_dbs()
 
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
 
-    asyncio.create_task(check_cache_clear_flag())
+    #asyncio.create_task(check_cache_clear_flag())
 
-    dp.message.middleware(AntiFloodMiddleware(cooldown_seconds=0.6))
+    dp.message.middleware(AntiFloodMiddleware(cooldown_seconds=1))
     dp.update.middleware(ErrorHandlerMiddleware(bot, ADMIN_IDS))
 
     await bot.delete_webhook(drop_pending_updates=True)

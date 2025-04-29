@@ -8,8 +8,8 @@ from keyboards.inline_kb import buy_premium_keyboard
 router = Router()
 
 
-@router.message(Command("premium"))
-async def premium(message: Message):
+@router.callback_query(F.data == 'premium')
+async def premium(callback: CallbackQuery):
     text = (
         "🌟 *Премиум-подписка* 🌟\n\n"
         "Получите больше возможностей для подготовки:\n"
@@ -20,7 +20,7 @@ async def premium(message: Message):
         "Выберите действие:"
     )
 
-    await message.answer(text, reply_markup=buy_premium_keyboard(), parse_mode="Markdown")
+    await callback.message.edit_text(text, reply_markup=buy_premium_keyboard(), parse_mode="Markdown")
 
 @router.callback_query(F.data == 'buy_premium')
 async def buy_premium(callback: CallbackQuery):

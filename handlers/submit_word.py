@@ -1,28 +1,28 @@
-from aiogram import types, Router
+from aiogram import types, Router, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from config import TASKS
 from database.database import submit_new_word
 from fsm import Moderation
 from handlers.base import menu
+from keyboards.inline_kb import menu_button
 
 router = Router()
 
 
-@router.message(Command('submit'))
-async def submit_word(message: types.Message, state: FSMContext):
+@router.callback_query(F.data == 'submit')
+async def submit_word(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Moderation.waiting_for_word)
-    await message.reply(
+    await callback.message.edit_text(
         "📝 *Предлагайте свои слова для заданий 9-15*\n\n"
         "Пожалуйста, отправьте слова (можно несколько за один раз) в формате:\n"
         "`<номер задания>.<правильное слово>.<неправильное слово>`\n\n"
         "*Примеры:*\n"
         "`9.кастрюля.кострюля`\n"
         "`10.придать (форму).предать (форму)`\n"
-        "`12.просит.просет`\n\n"
-        "_(Для выхода нажмите /menu)_",
+        "`12.просит.просет`\n\n",reply_markup=menu_button(),
         parse_mode="Markdown"
     )
 
