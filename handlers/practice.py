@@ -57,7 +57,7 @@ async def handle_answer(message: Message, state: FSMContext):
     pool = await get_pool()
     if user_choice == correct_answer:
 
-        result = await get_random_ask(pool, task_number)
+        result = await get_random_task(pool, task_number)
 
         task_id, question, correct, wrong = result
         options = [correct, wrong]
