@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 router = Router()
 
-PREMIUM_PRICE_RUB = 20
+PREMIUM_PRICE_RUB =20
 ALLOWED_FILE_TYPES = ['photo', 'document']  # Допустимые типы файлов
 ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png']  # Допустимые расширения для документов
 TIMEOUT_SECONDS = 7*60  # Время ожидания чека (5 минут)
