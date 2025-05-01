@@ -1,40 +1,53 @@
 import logging
-from logging import StreamHandler, FileHandler
+import sys
+import os
+from logging import StreamHandler, FileHandler # FileHandler нужен для JSON
 from logging.handlers import RotatingFileHandler
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger import jsonlogger # Теперь используем
 
-# Уровни логирования
-LOG_LEVEL = logging.DEBUG  # Можно менять на INFO, WARNING или ERROR для уменьшения подробности
-
+LOG_LEVEL = logging.DEBUG
+LOG_DIR = "logs"
+LOG_FILENAME_TEXT = os.path.join(LOG_DIR, "bot.log")
+#LOG_FILENAME_JSON = os.path.join(LOG_DIR, "bot.json.log") # Отдельный файл для JSON
 
 def setup_logging():
-    # Получаем корневой логгер
+    os.makedirs(LOG_DIR, exist_ok=True)
     logger = logging.getLogger()
     logger.setLevel(LOG_LEVEL)
 
-    # Настройка формата для логов в JSON
-    log_format = '%(asctime)s %(levelname)s %(name)s %(message)s'
-    formatter = jsonlogger.JsonFormatter(log_format)
+    if logger.handlers:
+        for handler in logger.handlers[:]:
+             logger.removeHandler(handler)
 
-    # Обработчик для записи в файл (с ротацией)
-    file_handler = RotatingFileHandler("logs/bot_errors.json", maxBytes=10 ** 6, backupCount=5, encoding="utf-8")
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(LOG_LEVEL)
+    # --- Стандартный текстовый форматер ---
+    log_format_string = '%(asctime)s - %(levelname)-8s - %(name)-15s - %(filename)s:%(lineno)d - %(message)s'
+    standard_formatter = logging.Formatter(log_format_string)
 
-    # Обработчик для вывода в консоль
-    stream_handler = StreamHandler()
-    stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(LOG_LEVEL)
+    # --- JSON Форматер ---
+    # Можно настроить поля, которые попадут в JSON
+    #json_format_string = '%(asctime)s %(levelname)s %(name)s %(filename)s %(lineno)d %(message)s'
+    #json_formatter = jsonlogger.JsonFormatter(json_format_string)
 
-    # Добавляем обработчики в логгер
-    logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
+    # --- Консольный обработчик (как в Варианте 1) ---
+    console_handler = StreamHandler(sys.stdout)
+    console_handler.setFormatter(standard_formatter)
+    console_handler.setLevel(logging.INFO)
+    logger.addHandler(console_handler)
 
-    # Информация о настройке логирования
-    #logger.info("Logging setup complete with level: %s", logging.getLevelName(LOG_LEVEL))
+    # --- Ротируемый текстовый файл (как в Варианте 1) ---
+    rotating_file_handler = RotatingFileHandler(
+        filename=LOG_FILENAME_TEXT, maxBytes=5*1024*1024, backupCount=5, encoding='utf-8'
+    )
+    rotating_file_handler.setFormatter(standard_formatter)
+    rotating_file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(rotating_file_handler)
 
+    # --- Файл для JSON логов ---
+    # Можно использовать RotatingFileHandler и для JSON, если нужно
+#    json_file_handler = FileHandler(filename=LOG_FILENAME_JSON, encoding='utf-8')
+#    json_file_handler.setFormatter(json_formatter)
+#    json_file_handler.setLevel(logging.DEBUG) # Пишем все в JSON
+#    logger.addHandler(json_file_handler)
 
+    logging.info("Logging setup complete. Console: INFO, Text File: DEBUG, JSON File: DEBUG")
 
-
-# Запуск настройки логирования
-setup_logging()

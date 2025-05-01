@@ -1,13 +1,20 @@
-from aiogram import Router
-from aiogram.types import Message
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
-from database.database import get_pool
+from database.database import get_pool, get_premium_users
 from handlers.base import menu
+from keyboards.inline_kb import menu_and_buy_premium
 
 router = Router()
 
-@router.message(Command("stats"))
-async def user_stats(message: Message):
+@router.callback_query(F.data == 'stats')
+async def user_stats(callback: CallbackQuery):
+    premium_users = await get_premium_users()
+    if callback.from_user.id not in premium_users:
+        await callback.message.answer('Личная статистика доступна только премиум пользователям',
+                                      reply_markup=menu_and_buy_premium())
+        await callback.answer()
+        return
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
@@ -17,11 +24,11 @@ async def user_stats(message: Message):
             WHERE user_id = $1
             ORDER BY task_number;
             """,
-            message.from_user.id
+            callback.from_user.id
         )
 
     if not rows:
-        await message.answer("У вас пока нет статистики. Попробуйте решать задания через /practice 🎯")
+        await callback.message.answer("У тебя пока нет статистики. Попробуйте решать задания  🎯")
         return
 
     text = "📊 Ваша статистика по заданиям:\n\n"
@@ -39,5 +46,5 @@ async def user_stats(message: Message):
             f"  - Самая длинная серия: {streak}\n\n"
         )
 
-    await message.answer(text)
-    await menu(message)
+    await callback.message.edit_text(text)
+    await menu(callback.message)

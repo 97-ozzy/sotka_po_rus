@@ -5,26 +5,22 @@ import asyncpg
 import random
 from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD, FLAG_FILE_PATH
 
+
 cache ={}
+premium_users_cache = []
 
 async def clear_cache():
     global cache
+    global premium_users_cache
     cache.clear()
+    premium_users_cache.clear()
 
-async def check_cache_clear_flag():
-    while True:
-        if os.path.exists(FLAG_FILE_PATH):
-            await clear_cache()
-            os.remove(FLAG_FILE_PATH)
-            #print("Файл флаг очищен, кэш был очищен.")
-        await asyncio.sleep(3600)
 
 
 
 _pool = None
 
 async def get_pool():
-
     global _pool
     if _pool is None:
         _pool = await asyncpg.create_pool(
@@ -48,11 +44,21 @@ async def init_dbs():
         user_id BIGINT,
         username TEXT,
         premium BOOLEAN DEFAULT FALSE,
+        premium_expires TEXT DEFAULT '-',
         submission_count INTEGER DEFAULT 0,
-        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        premium_expires TEXT DEFAULT '0'
+        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 """)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                username TEXT,
+                file TEXT,
+                time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
         await conn.execute('''
     CREATE TABLE IF NOT EXISTS word_submissions (
         id SERIAL PRIMARY KEY,
@@ -92,15 +98,26 @@ async def get_random_task(pool, task_number: int):
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             "SELECT id, question, correct_answer, wrong_answer FROM questions WHERE task_number = $1",
-            task_number
-        )
-
+            task_number)
         if not rows:
             return None
 
         cache[task_number] = [(row['id'], row['question'], row['correct_answer'], row['wrong_answer']) for row in rows]
         return random.choice(cache[task_number])
 
+
+
+async def get_premium_users():
+    global premium_users_cache
+    if len(premium_users_cache)==0:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT user_id FROM users WHERE  premium = TRUE"
+            )
+        premium_users_cache = [ int(row['user_id']) for row in rows]
+
+    return premium_users_cache
 
 async def add_user_to_db(user_id: int, username: str):
     pool = await get_pool()
@@ -122,26 +139,11 @@ async def submit_new_word(user_id, task_number, correct_word, wrong_word):
             VALUES ($1, $2, $3, $4)
         ''', user_id, task_number, correct_word, wrong_word)
 
-async def get_pending_submission():
+async def submit_payment(user_id,username, file):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        row =  await conn.fetchrow('''
-            SELECT id, user_id, task_number, correct_word, incorrect_words
-            FROM word_submissions
-            WHERE status = 'pending'
-            ORDER BY submission_time ASC
-            LIMIT 1
-        ''')
-        return row
+        await conn.execute('''
+            INSERT INTO subscriptions (user_id, username, file)
+            VALUES ($1, $2, $3)
+        ''', user_id, username, file)
 
-
-async def approve_new_submission(user_id:int, sub_id:int):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('UPDATE users SET submission_count = COALESCE(submission_count, 0) + 1 WHERE user_id = $1',user_id)
-        await conn.execute("UPDATE word_submissions SET status = 'approved' WHERE id = $1", sub_id)
-
-async def reject_new_submission(sub_id:int):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('DELETE FROM word_submissions WHERE id = $1', sub_id)

@@ -1,9 +1,9 @@
-from aiogram import Router
-from aiogram.types import Message
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
-from aiogram.types import ReplyKeyboardRemove
-from database.database import add_user_to_db
-
+from database.database import add_user_to_db, clear_cache
+from keyboards.inline_kb import menu_keyboard
 
 router = Router()
 @router.message(CommandStart())
@@ -19,26 +19,18 @@ async def start(message: Message):
 @router.message(Command('menu'))
 async def menu(message: Message):
     await message.answer(
-        "📚 *Каждое новое добавленное слово улучшает твою подготовку!*\n\n"
-        #"Выбери команду:\n "
-        "💪 Приступить к практике  - /practice\n"
-        "🆕 Добавить свои слова  - /submit\n"
-        "📊 Моя статистика  - /stats\n"
-        "🏆Таблица лидеров - /leaderboard\n\n"
-        "💎 Премиум-возможности - /premium\n"
-        "✉️ Написать в поддержку - /support\n"
-        "ℹ️ Справка о боте - /help",
-        parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
+        "📚 *Каждое новое добавленное слово улучшает твою подготовку!*",
+        parse_mode="Markdown", reply_markup=menu_keyboard())
 
-@router.message(Command("help"))
-async def help_info(message: Message):
-    await message.answer("✨ *Мы постоянно улучшаем бота!*\n\n"
-        "Новые задания скоро появятся — следите за обновлениями.\n\n"
-        "Хотите поддержать проект нажмите /premium"
-        "Если вы:\n"
-        "• Нашли ошибку ❌\n"
-        "• Хотите предложить идею 💡\n"
-        "• Или у вас есть вопросы ❓\n\n"
-        "Нажмите: /support\n"
-        "_Мы всегда рады обратной связи!_\n"
-        "_(Для выхода нажмите /menu)_", parse_mode="Markdown")
+@router.callback_query(F.data == "menu")
+async def to_menu(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await state.clear()
+    await menu(callback.message)
+
+@router.message(Command('clear_cache'))
+async def clear_cache_handler(message: Message):
+    if message.from_user.id == 936290830:
+        await clear_cache()
+        await message.answer('Кэш очистен')
+    return
