@@ -29,16 +29,16 @@ async def premium(callback: CallbackQuery):
     user_id = callback.from_user.id
     premium_status = await get_premium_users()
     text = "🌟 *Премиум-подписка* 🌟\n\n"
-    text += '*Поздравляю 🎉🎉🎉 У Вас уже есть премиум* 😊\n' if user_id in premium_status else \
-        'Получите больше возможностей для подготовки:\n'
+    text += '*Поздравляю 🎉🎉🎉 У тебя уже есть премиум* 😊\n' if user_id in premium_status else \
+        'Получи больше возможностей для подготовки:\n'
     text += (
         "• Пояснения к ответам 📚\n"
         "• Подробная статистика по каждому заданию 📈\n\n"
         f"Стоимость — *{PREMIUM_PRICE_RUB} рублей в месяц* 💎\n\n"
-        "Также вы можете *поддержать проект* любой суммой ❤️\n\n"
-        "Для оплаты перейдите по ссылке:\n"
+        "Также ты можешь *поддержать проект* любой суммой ❤️\n\n"
+        "Для оплаты нажми ниже:\n"
         "[Оплатить](https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102)\n\n"
-        "После оплаты отправьте боту скриншот или файл чека (PDF, JPG, PNG)."
+        "После оплаты отправь боту скриншот или файл чека (PDF, JPG, PNG)."
     )
     try:
         await callback.message.edit_text(
@@ -47,7 +47,7 @@ async def premium(callback: CallbackQuery):
     except TelegramBadRequest as e:
         logger.error(f"Ошибка при редактировании сообщения: {e}")
         await callback.message.answer(
-            "Произошла ошибка. Пожалуйста, попробуйте снова.", reply_markup=send_bill_keyboard()
+            "Произошла ошибка. Пожалуйста, попробуй снова.", reply_markup=send_bill_keyboard()
         )
 
 
@@ -55,8 +55,8 @@ async def premium(callback: CallbackQuery):
 async def send_bill(callback: CallbackQuery, state: FSMContext):
     await state.set_state(BuyPremiumStates.waiting_for_bill)
     await callback.message.answer(
-        "📸 Пожалуйста, отправьте скриншот или файл чека (PDF, JPG, PNG).\n"
-        f"У вас есть {TIMEOUT_SECONDS // 60} минут, чтобы отправить чек."
+        "📸 Пожалуйста, отправь скриншот или файл чека (PDF, JPG, PNG).\n"
+        f"У тебя есть {TIMEOUT_SECONDS // 60} минут, чтобы отправить чек."
     )
     # Устанавливаем таймер для очистки состояния
     await state.update_data(start_time=time.time())
@@ -72,7 +72,7 @@ async def get_bill(message: Message, state: FSMContext, bot: Bot):
     # Проверка таймаута
     if time.time() - start_time > TIMEOUT_SECONDS:
         await message.answer(
-            "⏰ Время ожидания чека истекло. Пожалуйста, начните процесс оплаты заново."
+            "⏰ Время ожидания чека истекло. Пожалуйста, начни процесс оплаты заново."
         )
         await state.clear()
         return
@@ -80,8 +80,8 @@ async def get_bill(message: Message, state: FSMContext, bot: Bot):
     # Проверка на наличие фото или документа
     if not (message.photo or message.document):
         await message.answer(
-            "❌ Пожалуйста, отправьте скриншот чека или файл (PDF, JPG, PNG).\n"
-            "Если вы ошиблись, попробуйте снова."
+            "❌ Пожалуйста, отправь скриншот чека или файл (PDF, JPG, PNG).\n"
+            "Попробуй снова."
         )
         return
 
@@ -90,7 +90,7 @@ async def get_bill(message: Message, state: FSMContext, bot: Bot):
         file_name = message.document.file_name.lower()
         if not any(file_name.endswith(ext) for ext in ALLOWED_DOCUMENT_EXTENSIONS):
             await message.answer(
-                "❌ Неверный формат файла. Пожалуйста, отправьте файл в формате PDF, JPG или PNG."
+                "❌ Неверный формат файла. Пожалуйста, отправь файл в формате PDF, JPG или PNG."
             )
             return
 
@@ -101,13 +101,13 @@ async def get_bill(message: Message, state: FSMContext, bot: Bot):
         # Сохранение чека в базе данных
         await submit_payment(user_id,username, file_id)
         await message.answer(
-            "✅ Спасибо! Ваш чек принят. Если всё верно, скоро вы получите премиум-доступ 💎"
+            "✅ Спасибо! Чек принят. Если всё верно, скоро получишь премиум-доступ 💎"
         )
         logger.info(f"Чек успешно обработан для пользователя {user_id}, file_id: {file_id}")
     except Exception as e:
         logger.error(f"Ошибка при сохранении чека для пользователя {user_id}: {e}")
         await message.answer(
-            "😔 Произошла ошибка при обработке чека. Пожалуйста, попробуйте снова или свяжитесь с поддержкой."
+            "😔 Произошла ошибка при обработке чека. Пожалуйста, попробуй снова или свяжитесь с поддержкой."
         )
     finally:
         await state.clear()

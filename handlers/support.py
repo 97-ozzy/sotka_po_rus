@@ -33,6 +33,6 @@ async def receive_support_message(message: Message, state: FSMContext):
             VALUES ($1, $2, $3)
         """, user_id, text, timestamp)
 
-    await message.answer("✅ Ваше сообщение сохранено. Спасибо за обратную связь!")
+    await message.answer("✅ Сообщение сохранено. Спасибо за обратную связь!")
     await state.clear()
     await menu(message)

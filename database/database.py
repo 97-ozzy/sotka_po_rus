@@ -11,15 +11,10 @@ premium_users_cache = []
 
 async def clear_cache():
     global cache
+    global premium_users_cache
     cache.clear()
+    premium_users_cache.clear()
 
-async def check_cache_clear_flag():
-    while True:
-        if os.path.exists(FLAG_FILE_PATH):
-            await clear_cache()
-            os.remove(FLAG_FILE_PATH)
-            #print("Файл флаг очищен, кэш был очищен.")
-        await asyncio.sleep(3600)
 
 
 

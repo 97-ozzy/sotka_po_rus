@@ -13,7 +13,7 @@ router = Router()
 
 @router.callback_query(F.data == 'start_practice')
 async def practice(callback: CallbackQuery):
-    await callback.message.edit_text("Выберите номер задания: \n"
+    await callback.message.edit_text("Выбери номер задания: \n"
                          "№4 - ударения\n"
                          "№9 - гласные в корне\n"
                          "№10 - приставки\n"
@@ -41,7 +41,7 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
     random.shuffle(options)
     options= options if task_number !=15 else ['н','нн']
 
-    label =  f"Что вставить вместо пропуска\n\n {question}" if task_number != 4 else "Выберите слово с правильным ударением:"
+    label =  f"Что вставить вместо пропуска\n\n {question}" if task_number != 4 else "Выбери слово с правильным ударением:"
 
     await callback.message.edit_text(f"Задание: №{task_number}")
     await callback.message.answer(label, reply_markup=answer_keyboard(options))
@@ -57,7 +57,7 @@ async def handle_answer(message: Message, state: FSMContext):
     pool = await get_pool()
     if user_choice == correct_answer:
 
-        result = await get_random_task(pool, task_number)
+        result = await get_random_ask(pool, task_number)
 
         task_id, question, correct, wrong = result
         options = [correct, wrong]
@@ -97,14 +97,14 @@ async def handle_answer(message: Message, state: FSMContext):
         )
 
         if streak >= longest_streak_in_db:
-            record_text = "\n🏆 Новый рекорд подряд правильных ответов!"
+            record_text = "\n🏆 Новый рекорд!"
         else:
             record_text = ""
 
         await message.answer(
             "❌ Неверно", reply_markup=ReplyKeyboardRemove())
         text = (f"Правильный ответ: {correct_answer}\n\n"
-                f"Правильных подряд: {streak}{record_text}\n")
+                f"Правильных подряд ответов: {streak}{record_text}\n")
 
         await message.answer(text, reply_markup= explain_wrong_answer_keyboard(task_id))
 
@@ -129,7 +129,7 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
     random.shuffle(options)
     options = options if task_number != 15 else ['н', 'нн']
 
-    label = f"Что вставить вместо пропуска\n\n {question}" if task_number !=4 else "Выберите слово с правильным ударением:"
+    label = f"Что вставить вместо пропуска\n\n {question}" if task_number !=4 else "Выбери слово с правильным ударением:"
 
     await callback.message.answer(label, reply_markup=answer_keyboard(options))
 
@@ -147,7 +147,8 @@ async def select_another_task(callback: CallbackQuery):
     premium_users = await get_premium_users()
     if callback.from_user.id not in premium_users:
         await callback.message.edit_reply_markup()
-        await callback.message.answer('Объяснения доступны только премиум пользователям',
+        await callback.message.answer('*Объяснения доступны только премиум пользователям*',
+                                      parse_mode='Markdown',
                                       reply_markup=buy_premium_wrong_answer_keyboard())
         await callback.answer()
         return

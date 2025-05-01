@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
-from database.database import add_user_to_db
+from database.database import add_user_to_db, clear_cache
 from keyboards.inline_kb import menu_keyboard
 
 router = Router()
@@ -28,3 +28,9 @@ async def to_menu(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await menu(callback.message)
 
+@router.message(Command('clear_cache'))
+async def clear_cache_handler(message: Message):
+    if message.from_user.id == 936290830:
+        await clear_cache()
+        await message.answer('Кэш очистен')
+    return

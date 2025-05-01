@@ -28,7 +28,7 @@ async def user_stats(callback: CallbackQuery):
         )
 
     if not rows:
-        await callback.message.answer("У вас пока нет статистики. Попробуйте решать задания через /practice 🎯")
+        await callback.message.answer("У тебя пока нет статистики. Попробуйте решать задания  🎯")
         return
 
     text = "📊 Ваша статистика по заданиям:\n\n"
