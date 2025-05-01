@@ -5,7 +5,6 @@ from aiogram.filters import Command
 from config import TASKS
 from database.database import get_pool
 from handlers.base import menu
-from keyboards.inline_kb import task_keyboard
 
 router = Router()
 

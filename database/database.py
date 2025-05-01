@@ -1,9 +1,6 @@
-import asyncio
-import os
-
 import asyncpg
 import random
-from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD, FLAG_FILE_PATH
+from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD
 
 
 cache ={}

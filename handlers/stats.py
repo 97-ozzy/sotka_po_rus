@@ -1,6 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Command
+from aiogram.types import CallbackQuery
 from database.database import get_pool, get_premium_users
 from handlers.base import menu
 from keyboards.inline_kb import menu_and_buy_premium
