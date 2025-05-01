@@ -3,9 +3,10 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 
-from database.database import get_pool, get_random_task
+from database.database import get_pool, get_random_task, get_premium_users
 from fsm import Practice
-from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, premium_wrong_answer_keyboard
+from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, \
+    explain_wrong_answer_keyboard, buy_premium_wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
 
 router = Router()
@@ -38,6 +39,7 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
 
     options = [correct, wrong]
     random.shuffle(options)
+    options= options if task_number !=15 else ['н','нн']
 
     label =  f"Что вставить вместо пропуска\n\n {question}" if task_number != 4 else "Выберите слово с правильным ударением:"
 
@@ -60,6 +62,8 @@ async def handle_answer(message: Message, state: FSMContext):
         task_id, question, correct, wrong = result
         options = [correct, wrong]
         random.shuffle(options)
+        options = options if task_number != 15 else ['н', 'нн']
+
         await state.update_data(correct=correct, streak=streak + 1, task_id=task_id)
 
         label = f'✅ Верно!\n\n{question}' if task_number != 4 else '✅ Верно!'
@@ -67,7 +71,8 @@ async def handle_answer(message: Message, state: FSMContext):
         await message.answer(label, reply_markup=answer_keyboard(options))
 
     else:
-        user_id = message.from_user.username
+        username = message.from_user.username
+        user_id = message.from_user.id
         async with pool.acquire() as conn:
             await conn.execute(
                 """
@@ -80,7 +85,7 @@ async def handle_answer(message: Message, state: FSMContext):
                     longest_streak = GREATEST(user_task_stats.longest_streak, $5)
                 ;
                 """,
-                message.from_user.id, task_number, streak + 1, streak, streak, user_id
+                user_id, task_number, streak + 1, streak, streak, username
             )
 
         longest_streak_in_db = await pool.fetchval(
@@ -88,7 +93,7 @@ async def handle_answer(message: Message, state: FSMContext):
             SELECT longest_streak FROM user_task_stats
             WHERE user_id = $1 AND task_number = $2;
             """,
-            message.from_user.id, task_number
+            user_id, task_number
         )
 
         if streak >= longest_streak_in_db:
@@ -100,7 +105,8 @@ async def handle_answer(message: Message, state: FSMContext):
             "❌ Неверно", reply_markup=ReplyKeyboardRemove())
         text = (f"Правильный ответ: {correct_answer}\n\n"
                 f"Правильных подряд: {streak}{record_text}\n")
-        await message.answer(text, reply_markup= premium_wrong_answer_keyboard(task_id))
+
+        await message.answer(text, reply_markup= explain_wrong_answer_keyboard(task_id))
 
         await state.update_data(streak=0)
         await state.set_state(Practice.waiting_restart)
@@ -121,6 +127,7 @@ async def repeat_task(callback: CallbackQuery, state: FSMContext):
 
     options = [correct, wrong]
     random.shuffle(options)
+    options = options if task_number != 15 else ['н', 'нн']
 
     label = f"Что вставить вместо пропуска\n\n {question}" if task_number !=4 else "Выберите слово с правильным ударением:"
 
@@ -137,6 +144,13 @@ async def select_another_task(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("explain_"))
 async def select_another_task(callback: CallbackQuery):
+    premium_users = await get_premium_users()
+    if callback.from_user.id not in premium_users:
+        await callback.message.edit_reply_markup()
+        await callback.message.answer('Объяснения доступны только премиум пользователям',
+                                      reply_markup=buy_premium_wrong_answer_keyboard())
+        await callback.answer()
+        return
     task_id = int(callback.data.split('_')[1])
 
     current_text = callback.message.text

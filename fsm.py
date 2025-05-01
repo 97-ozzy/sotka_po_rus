@@ -10,3 +10,9 @@ class Moderation(StatesGroup):
 
 class SupportStates(StatesGroup):
     waiting_for_message = State()
+
+class SubmitWord(StatesGroup):
+    wrong_format = State()
+
+class BuyPremiumStates(StatesGroup):
+    waiting_for_bill = State()

@@ -14,6 +14,7 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 
 FLAG_FILE_PATH = 'database/cache_clear_flag.txt'
 
+PROVIDER_TOKEN = os.getenv('UKASSA_TOKEN')
 ADMIN_IDS = os.getenv("ADMIN_IDS")
 ADMIN_IDS = ADMIN_IDS.split(',')
 ADMIN_IDS = [ int(admin_id) for admin_id in ADMIN_IDS]

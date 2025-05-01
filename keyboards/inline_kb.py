@@ -6,6 +6,16 @@ def menu_button():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
     ])
+def menu_and_buy_premium():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="💎 Оформить премиум", callback_data="premium")]
+    ])
+def send_bill_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="🧾 Отправить чек", callback_data="send_bill")]
+    ])
 
 def task_keyboard():
     inline_keyboard = [[InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]]
@@ -31,7 +41,7 @@ def menu_keyboard():
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
     ])
 
-def premium_wrong_answer_keyboard(task_id):
+def explain_wrong_answer_keyboard(task_id):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu"),
          InlineKeyboardButton(text="🆕 Выбрать задание", callback_data="practice")],
@@ -44,6 +54,13 @@ def wrong_answer_keyboard():
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu"),
             InlineKeyboardButton(text="🆕 Выбрать задание", callback_data="practice")],
         [InlineKeyboardButton(text="🔁 Начать заново", callback_data="repeat_task")]
+    ])
+def buy_premium_wrong_answer_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu"),
+         InlineKeyboardButton(text="🆕 Выбрать задание", callback_data="practice")],
+        [InlineKeyboardButton(text="🔁 Начать заново", callback_data="repeat_task")],
+        [InlineKeyboardButton(text="💎 Оформить премиум", callback_data=f"premium")]
     ])
 
 def moderation_keyboard(sub_id, user_id, correct_word):
