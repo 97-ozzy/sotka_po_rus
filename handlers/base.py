@@ -15,8 +15,8 @@ async def start(message: Message):
     await add_user_to_db(user_id, username)
     await message.answer(
         'Привет! Я — твой помощник для подготовки к экзамену. '
-        'Я помогу тебе с заданиями и дам полезные советы. '
-        'Используй нажми на /menu для взаимодействия.')
+        'Я помогу тебе с заданиями и дам полезные советы. ')
+    await menu(message)
 
 @router.message(Command('menu'))
 async def menu(message: Message):
