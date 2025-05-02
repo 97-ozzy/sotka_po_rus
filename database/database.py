@@ -42,20 +42,22 @@ async def init_dbs():
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         user_id BIGINT,
-        username TEXT,
+        username TEXT DEFAULT '-',
+        last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         premium BOOLEAN DEFAULT FALSE,
-        premium_expires TEXT DEFAULT '-',
+        premium_expires TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         submission_count INTEGER DEFAULT 0,
-        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 """)
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS subscriptions (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT,
-                username TEXT,
+                username TEXT DEFAULT '-',
+                is_viewed BOOLEAN DEFAULT FALSE,
                 file TEXT,
-                time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
 
@@ -67,15 +69,16 @@ async def init_dbs():
         correct_word TEXT,
         wrong_words TEXT,
         status TEXT DEFAULT 'pending',
-        submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        submission_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     ''')
         await conn.execute('''
         CREATE TABLE IF NOT EXISTS support_messages (
             id SERIAL PRIMARY KEY,
             user_id BIGINT NOT NULL,
+            username TEXT DEFAULT '-'
             message TEXT NOT NULL,
-            date TIMESTAMP NOT NULL,
+            date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             is_viewed BOOLEAN DEFAULT FALSE
     );''')
         await conn.execute('''
@@ -155,12 +158,13 @@ async def get_pending_premium():
         row = await conn.fetchrow('''
                 SELECT id, user_id, username, file, time
                 FROM subscriptions
+                WHERE is_viewed = FALSE
                 ORDER BY time DESC
                 LIMIT 1
             ''')
         return row
 
-async def set_premium_status(user_id):
+async def set_premium_status(sub_id, user_id):
     pool = await get_pool()
     current_datetime = datetime.datetime.now()
     time_delta = datetime.timedelta(days=30)
@@ -171,6 +175,12 @@ async def set_premium_status(user_id):
                     SET premium=TRUE, premium_expires_date = $1
                     WHERE user_id = $2
                 ''', expire_date, user_id)
+        await conn.execute(
+            '''
+            UPDATE subscriptions
+            SET is_viewed = TRUE
+            WHERE id = $1
+            ''', sub_id)
 
 
 async def remove_bill_from_db(sub_id):

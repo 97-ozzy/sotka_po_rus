@@ -80,9 +80,7 @@ async def approve_premium(callback: CallbackQuery):
     sub_id, user_id, username = callback.data.split('_')[1:]
     user_id = int(user_id)
     sub_id = int(sub_id)
-    await set_premium_status(user_id)
-    await remove_bill_from_db(sub_id)
-    await callback.message.delete()
+    await set_premium_status(sub_id, user_id)
     await clear_cache()
     await callback.message.answer(f'Премиум выдан @{username} {user_id}')
 
@@ -95,4 +93,4 @@ async def reject_premium(callback: CallbackQuery):
     user_id = int(user_id)
     await remove_bill_from_db(sub_id)
     await callback.message.delete()
-    await callback.message.edit_text(f'Премиум отклонен @{username} {user_id}')
+    await callback.message.answer(f'Премиум отклонен @{username} {user_id}')

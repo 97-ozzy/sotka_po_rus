@@ -1,5 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
+
+from middlewares.active_users import ActivityTrackerMiddleware
 from middlewares.antiflood import AntiSpamMiddleware
 from middlewares.error_handler import ErrorHandlerMiddleware
 from database.database import init_dbs
@@ -9,13 +11,14 @@ from logs.logging_config import setup_logging
 
 
 async def setup_bot():
-    await init_dbs()
+    #await init_dbs()
 
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
 
     dp.message.middleware(AntiSpamMiddleware(11,10, 10))
     dp.update.middleware(ErrorHandlerMiddleware(bot, ADMIN_IDS))
+    dp.message.middleware(ActivityTrackerMiddleware())
 
     await bot.delete_webhook(drop_pending_updates=True)
 

@@ -25,13 +25,14 @@ async def receive_support_message(message: Message, state: FSMContext):
     user_id = message.from_user.id
     text = message.text
     timestamp = datetime.now()
+    username= message.from_user.username
 
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO support_messages (user_id, message, date)
-            VALUES ($1, $2, $3)
-        """, user_id, text, timestamp)
+            INSERT INTO support_messages (user_id, username, message, date)
+            VALUES ($1, $2, $3, $4)
+        """, user_id, username, text, timestamp)
 
     await message.answer("✅ Сообщение сохранено. Спасибо за обратную связь!")
     await state.clear()
