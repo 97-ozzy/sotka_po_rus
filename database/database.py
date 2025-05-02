@@ -1,3 +1,6 @@
+import datetime
+import time
+
 import asyncpg
 import random
 from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD
@@ -143,4 +146,38 @@ async def submit_payment(user_id,username, file):
             INSERT INTO subscriptions (user_id, username, file)
             VALUES ($1, $2, $3)
         ''', user_id, username, file)
+
+
+
+async def get_pending_premium():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow('''
+                SELECT id, user_id, username, file, time
+                FROM subscriptions
+                ORDER BY time DESC
+                LIMIT 1
+            ''')
+        return row
+
+async def set_premium_status(user_id):
+    pool = await get_pool()
+    current_datetime = datetime.datetime.now()
+    time_delta = datetime.timedelta(days=30)
+    expire_date = current_datetime + time_delta
+    async with pool.acquire() as conn:
+        await conn.execute('''
+                    UPDATE users
+                    SET premium=TRUE, premium_expires_date = $1
+                    WHERE user_id = $2
+                ''', expire_date, user_id)
+
+
+async def remove_bill_from_db(sub_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+                    DELETE FROM subscriptions
+            WHERE id = $1
+                ''', sub_id)
 

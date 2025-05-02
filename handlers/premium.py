@@ -37,7 +37,7 @@ async def premium(callback: CallbackQuery):
         "Также ты можешь отправить любую сумму *на развитие проекта*  ❤️\n\n"
         
     )
-    text+= "🎉 *У тебя есть премиум* 🎉" if user_id in premium_status else   "После оплаты отправь боту скриншот или файл чека (PDF, JPG, PNG)."
+    text+= "🎉 *У тебя есть премиум* 🎉" if user_id in premium_status else   "После оплаты отправь боту скриншот чека."
     try:
         await callback.message.edit_text(
             text, reply_markup=send_bill_keyboard(user_id, premium_status), parse_mode="Markdown", disable_web_page_preview=True
@@ -53,7 +53,7 @@ async def premium(callback: CallbackQuery):
 async def send_bill(callback: CallbackQuery, state: FSMContext):
     await state.set_state(BuyPremiumStates.waiting_for_bill)
     await callback.message.answer(
-        "📸 Пожалуйста, отправь скриншот или файл чека (PDF, JPG, PNG).\n"
+        "📸 Пожалуйста, отправь скриншот чека.\n"
         f"У тебя есть {TIMEOUT_SECONDS // 60} минут, чтобы отправить чек."
     )
     # Устанавливаем таймер для очистки состояния
@@ -76,24 +76,16 @@ async def get_bill(message: Message, state: FSMContext):
         return
 
     # Проверка на наличие фото или документа
-    if not (message.photo or message.document):
+    if not message.photo:
         await message.answer(
-            "❌ Пожалуйста, отправь скриншот чека или файл (PDF, JPG, PNG).\n"
+            "❌ Пожалуйста, отправь скриншот чека.\n"
             "Попробуй снова."
         )
         return
 
-    # Проверка типа документа
-    if message.document:
-        file_name = message.document.file_name.lower()
-        if not any(file_name.endswith(ext) for ext in ALLOWED_DOCUMENT_EXTENSIONS):
-            await message.answer(
-                "❌ Неверный формат файла. Пожалуйста, отправь файл в формате PDF, JPG или PNG."
-            )
-            return
 
     # Получение file_id
-    file_id = message.photo[-1].file_id if message.photo else message.document.file_id
+    file_id = message.photo[-1].file_id
 
     try:
         # Сохранение чека в базе данных

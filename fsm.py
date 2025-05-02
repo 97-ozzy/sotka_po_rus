@@ -16,3 +16,6 @@ class SubmitWord(StatesGroup):
 
 class BuyPremiumStates(StatesGroup):
     waiting_for_bill = State()
+
+class Premium(StatesGroup):
+    moderating = State()
