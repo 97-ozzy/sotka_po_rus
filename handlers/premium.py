@@ -1,12 +1,14 @@
-import time
 import logging
-from aiogram import Router, F, Bot
+import time
+
+from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message, CallbackQuery
+
 from database.database import submit_payment, get_premium_users
 from keyboards.inline_kb import send_bill_keyboard
-from aiogram.exceptions import TelegramBadRequest
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

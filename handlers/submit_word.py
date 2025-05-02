@@ -84,8 +84,8 @@ async def process_submission(message: Message, state: FSMContext):
 
         except ValueError as e: # Ловим ожидаемые ошибки формата и валидации
             failed_submissions_details.append(f"❌ `{original_submission_text}`\n   ↳ {str(e)}")
-        except Exception as e: # Ловим непредвиденные ошибки (например, с БД)
-            failed_submissions_details.append(f"❌ `{original_submission_text}`\n   ↳ ⚠️ Произошла внутренняя ошибка при обработке этой строки.")
+        #except Exception as e: # Ловим непредвиденные ошибки (например, с БД)
+         #   failed_submissions_details.append(f"❌ `{original_submission_text}`\n   ↳ ⚠️ Произошла внутренняя ошибка при обработке этой строки.")
 
     reply_parts = []
     if successful_submissions_count > 0:

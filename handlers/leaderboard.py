@@ -1,6 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Command
+from aiogram.types import CallbackQuery
 
 from config import TASKS
 from database.database import get_pool

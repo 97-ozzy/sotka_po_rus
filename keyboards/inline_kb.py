@@ -51,8 +51,8 @@ def explain_wrong_answer_keyboard(task_id):
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu"),
          InlineKeyboardButton(text="🆕 Выбрать задание", callback_data="practice")],
 
-        [InlineKeyboardButton(text="🔁 Начать заново", callback_data="repeat_task"),
-        InlineKeyboardButton(text="💡 Объясни", callback_data=f"explain_{task_id}")]
+        [InlineKeyboardButton(text="💡 Объясни", callback_data=f"explain_{task_id}")],
+        [InlineKeyboardButton(text="🔁 Начать заново", callback_data="repeat_task")]
     ])
 def wrong_answer_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
