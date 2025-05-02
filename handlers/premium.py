@@ -28,26 +28,24 @@ class BuyPremiumStates(StatesGroup):
 async def premium(callback: CallbackQuery):
     user_id = callback.from_user.id
     premium_status = await get_premium_users()
-    text = "🌟 *Премиум-подписка* 🌟\n\n"
-    text += '*Поздравляю 🎉🎉🎉 У тебя уже есть премиум* 😊\n' if user_id in premium_status else \
+    text = (
+         "🌟 *Премиум-подписка* 🌟\n\n"
         'Получи больше возможностей для подготовки:\n'
-    text += (
         "• Пояснения к ответам 📚\n"
         "• Подробная статистика по каждому заданию 📈\n\n"
         f"Стоимость — *{PREMIUM_PRICE_RUB} рублей в месяц* 💎\n\n"
-        "Также ты можешь *поддержать проект* любой суммой ❤️\n\n"
-        "Для оплаты нажми ниже:\n"
-        "[Оплатить](https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102)\n\n"
-        "После оплаты отправь боту скриншот или файл чека (PDF, JPG, PNG)."
+        "Также ты можешь отправить любую сумму *на развитие проекта*  ❤️\n\n"
+        
     )
+    text+= "🎉 *У тебя есть премиум* 🎉" if user_id in premium_status else   "После оплаты отправь боту скриншот или файл чека (PDF, JPG, PNG)."
     try:
         await callback.message.edit_text(
-            text, reply_markup=send_bill_keyboard(), parse_mode="Markdown", disable_web_page_preview=True
+            text, reply_markup=send_bill_keyboard(user_id, premium_status), parse_mode="Markdown", disable_web_page_preview=True
         )
     except TelegramBadRequest as e:
         logger.error(f"Ошибка при редактировании сообщения: {e}")
         await callback.message.answer(
-            "Произошла ошибка. Пожалуйста, попробуй снова.", reply_markup=send_bill_keyboard()
+            "Произошла ошибка. Пожалуйста, попробуй снова.", reply_markup=send_bill_keyboard(user_id, premium_status)
         )
 
 
@@ -63,7 +61,7 @@ async def send_bill(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(BuyPremiumStates.waiting_for_bill)
-async def get_bill(message: Message, state: FSMContext, bot: Bot):
+async def get_bill(message: Message, state: FSMContext):
     user_id = message.from_user.id
     username = message.from_user.username
     state_data = await state.get_data()

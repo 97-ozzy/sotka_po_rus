@@ -11,10 +11,15 @@ def menu_and_buy_premium():
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="💎 Оформить премиум", callback_data="premium")]
     ])
-def send_bill_keyboard():
+def send_bill_keyboard(user_id, premium_status):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="🧾 Отправить чек", callback_data="send_bill")]
+        [InlineKeyboardButton(text="🧾 Отправить чек", callback_data="send_bill")],
+        [InlineKeyboardButton(text="❤️ Поддержать проект", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="💳 Оплатить премиум", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")]
+    ]) if user_id not in premium_status else InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="❤️ Поддержать проект", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
     ])
 
 def task_keyboard():
