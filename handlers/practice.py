@@ -115,7 +115,7 @@ async def handle_answer(message: Message, state: FSMContext):
 async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_reply_markup(reply_markup=None)
     data = await state.get_data()
-    task_number =  data.get("task_number")
+    task_number =  data.get('task_number')
 
     pool = await get_pool()
     result = await get_random_task(pool, task_number)

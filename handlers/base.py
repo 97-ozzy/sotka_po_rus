@@ -21,6 +21,13 @@ async def start(message: Message):
 
 @router.message(Command('menu'))
 async def menu(message: Message):
+    try:
+        await message.bot.edit_message_reply_markup(
+            chat_id=message.chat.id,
+            message_id=message.message_id - 1
+        )
+    except:
+        pass
     await message.answer(
         "📚 *Каждое новое добавленное слово улучшает твою подготовку!*",
         parse_mode="Markdown", reply_markup=menu_keyboard())
