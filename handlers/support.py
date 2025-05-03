@@ -15,6 +15,7 @@ router = Router()
 @router.callback_query(F.data == 'support')
 async def start_support(callback: CallbackQuery, state: FSMContext):
     await state.set_state(SupportStates.waiting_for_message)
+    #print(callback.message.chat.id)
     await state.update_data()
     await callback.message.edit_text(
         "✉️ Напишите своё сообщение, и мы обязательно прочитаем его!",

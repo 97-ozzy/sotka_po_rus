@@ -81,13 +81,23 @@ class ErrorHandlerMiddleware(BaseMiddleware):
         return None
 
     async def _notify_admins(self, error_msg: str, event: Any):
-        event_details = f"Event: {event}"
+        event_details = f"Event: {event}"[:1000]
         for admin_id in self.admin_ids:
             try:
+                action = "неизвестное действие"
+                if isinstance(event, Update):
+                    if event.message and event.message.text:
+                        action = f"команда или сообщение: '{event.message.text}'"
+                    elif event.callback_query and event.callback_query.data:
+                        action = f"действие с callback: '{event.callback_query.data}'"
+                elif isinstance(event, Message) and event.text:
+                    action = f"команда или сообщение: '{event.text}'"
+                elif isinstance(event, CallbackQuery) and event.data:
+                    action = f"действие с callback: '{event.data}'"
+                text = f"🚨 Ошибка в боте:\n{error_msg}\n{action}\n\n{event_details}"
                 await self.bot.send_message(
                     admin_id,
-                    f"🚨 Ошибка в боте:\n{error_msg}\n\n{event_details}",
-                    parse_mode="Markdown"
+                    text=text[:4096]
                 )
             except Exception as e:
                 logger.error(f"Failed to notify admin {admin_id}: {e}", exc_info=True)

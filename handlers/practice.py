@@ -49,7 +49,6 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
 @router.message(Practice.answering)
 async def handle_answer(message: Message, state: FSMContext):
     data = await state.get_data()
-    print(message.chat.id)
     task_number = data["task_number"]
     task_id = data['task_id']
     correct_answer = data["correct"]
@@ -113,10 +112,10 @@ async def handle_answer(message: Message, state: FSMContext):
         await state.set_state(Practice.waiting_restart)
 
 @router.callback_query(F.data == "repeat_task")
-async def repeat_task(callback: CallbackQuery, state: FSMContext):
+async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_reply_markup(reply_markup=None)
     data = await state.get_data()
-    task_number =  data["task_number"]
+    task_number =  data.get("task_number")
 
     pool = await get_pool()
     result = await get_random_task(pool, task_number)

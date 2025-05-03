@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 
 
-load_dotenv('/home/askar/sotka_po_rus/utils/.env')
+load_dotenv('utils/.env')
 
 TOKEN = os.getenv("BOT_TOKEN")
 
