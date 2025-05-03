@@ -1,10 +1,11 @@
 import datetime
 import time
-
+import logging
 import asyncpg
 import random
 from config import  DB_NAME, DB_USER, DB_PORT,DB_HOST, DB_PASSWORD
 
+logger = logging.getLogger(__name__)
 
 cache ={}
 premium_users_cache = []
@@ -103,6 +104,7 @@ async def get_random_task(pool, task_number: int):
             "SELECT id, question, correct_answer, wrong_answer FROM questions WHERE task_number = $1",
             task_number)
         if not rows:
+            logger.error(f"No tasks found in db for task_number: {task_number}")
             return None
 
         cache[task_number] = [(row['id'], row['question'], row['correct_answer'], row['wrong_answer']) for row in rows]
