@@ -14,12 +14,18 @@ router = Router()
 
 @router.callback_query(F.data == 'support')
 async def start_support(callback: CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state == SupportStates.waiting_for_message:
+        # Already in the support state, just acknowledge the callback
+        await callback.answer()
+        return
     await state.set_state(SupportStates.waiting_for_message)
-    #print(callback.message.chat.id)
-    await state.update_data()
     await callback.message.edit_text(
-        "✉️ Напишите своё сообщение, и мы обязательно прочитаем его!",
-        reply_markup=menu_button(), parse_mode='Markdown')
+            "✉️ Напишите своё сообщение, и мы обязательно прочитаем его!",
+            reply_markup=menu_button(), parse_mode='Markdown')
+
+
+
 
 @router.message(SupportStates.waiting_for_message)
 async def receive_support_message(message: Message, state: FSMContext):

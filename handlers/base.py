@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
@@ -34,9 +35,14 @@ async def menu(message: Message):
 
 @router.callback_query(F.data == "menu")
 async def to_menu(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_reply_markup(reply_markup=None)
-    await state.clear()
-    await menu(callback.message)
+    try:
+        await callback.message.edit_reply_markup(reply_markup=None)
+        await state.clear()
+        await menu(callback.message)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            # Message is already correct, no need to edit
+            pass
 #----------------------------------------
 @router.message(Command('clear_cache'))
 async def clear_cache_handler(message: Message):

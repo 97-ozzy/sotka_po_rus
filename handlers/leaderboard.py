@@ -7,8 +7,18 @@ from handlers.base import menu
 
 router = Router()
 
+def blur_username(username):
+    if username == None:
+        return 'noname'
+    encode = username[1:-1]
+    encode = [encode[i] if i%2==0 else '*' for i in range(len(encode))]
+    encode = ''.join(encode)
+    encode = username[0]+encode+username[-1]
+    return encode
+
 @router.callback_query(F.data == 'leaderboard')
 async def show_leaderboard(callback: CallbackQuery):
+    username = callback.from_user.username
     leaderboard_text= ''
     conn = await get_pool()
     for task_number in TASKS:
@@ -28,9 +38,12 @@ async def show_leaderboard(callback: CallbackQuery):
             await callback.message.answer(f"Пока нет данных для задания №{task_number}.")
         else:
             for i, row in enumerate(rows, 1):
-                leaderboard_text += f"@{row['username']} — {row['longest_streak']} \n"
+                username_added = f"@{row['username']}" if row['username']==username else blur_username(row['username'])
+                leaderboard_text += f"{username_added} — {row['longest_streak']} \n"
         leaderboard_text+='\n'
-
-    await callback.message.edit_text(leaderboard_text)
-    await callback.answer()
-    await menu(callback.message)
+    try:
+        await callback.message.edit_text(leaderboard_text)
+        await callback.answer()
+        await menu(callback.message)
+    except:
+        pass

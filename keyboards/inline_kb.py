@@ -40,7 +40,7 @@ def menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")],
         [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
-        [InlineKeyboardButton(text="🏆 Таблица лидеров", callback_data="leaderboard")],
+        [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
         [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
         [InlineKeyboardButton(text="🆕 Добавить свои слова", callback_data="submit")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]

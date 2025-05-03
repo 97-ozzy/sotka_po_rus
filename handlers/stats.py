@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 from database.database import get_pool, get_premium_users
 from handlers.base import menu
@@ -8,6 +9,7 @@ router = Router()
 
 @router.callback_query(F.data == 'stats')
 async def user_stats(callback: CallbackQuery):
+    await callback.answer()
     premium_users = await get_premium_users()
     if callback.from_user.id not in premium_users:
         await callback.message.answer('Личная статистика доступна только премиум пользователям',
@@ -44,6 +46,11 @@ async def user_stats(callback: CallbackQuery):
             f"  - Точность: {accuracy:.1f}%\n"
             f"  - Самая длинная серия: {streak}\n\n"
         )
+    try:
+        await callback.message.edit_text(text)
+        await menu(callback.message)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+        # Message is already correct, no need to edit
+            pass
 
-    await callback.message.edit_text(text)
-    await menu(callback.message)

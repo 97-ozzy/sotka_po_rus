@@ -13,6 +13,11 @@ router = Router()
 
 @router.callback_query(F.data == 'submit')
 async def submit_word(callback: CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state == Moderation.waiting_for_word:
+        # Already in the support state, just acknowledge the callback
+        await callback.answer()
+        return
     await state.set_state(Moderation.waiting_for_word)
     await callback.message.edit_text(
         "📝 *Предлагайте свои слова для заданий 9-15*\n\n"
@@ -25,7 +30,7 @@ async def submit_word(callback: CallbackQuery, state: FSMContext):
         "Каждая пара слов должна быть на новой строке.",
         reply_markup=menu_button(),
         parse_mode="Markdown"
-    )
+        )
     await callback.answer()
 
 

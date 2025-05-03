@@ -1,5 +1,7 @@
+import logging
 import random
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 
@@ -10,10 +12,13 @@ from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, \
 from keyboards.reply_kb import answer_keyboard
 
 router = Router()
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 @router.callback_query(F.data == 'start_practice')
 async def practice(callback: CallbackQuery):
-    await callback.message.edit_text("Выбери номер задания: \n"
+    try:
+        await callback.message.edit_text("Выбери номер задания: \n"
                          "№4 - ударения\n"
                          "№9 - гласные в корне\n"
                          "№10 - приставки\n"
@@ -22,9 +27,17 @@ async def practice(callback: CallbackQuery):
                          "№13 - НЕ слитно или раздельно\n"
                          "№14 - слитно или раздельно\n"
                          "№15 - Н и НН", reply_markup=task_keyboard())
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            pass
+        else:
+            logger.error(f"Ошибка practice: {e}")
 
 @router.callback_query(F.data.startswith("task_"))
 async def choose_task(callback: CallbackQuery, state: FSMContext):
+    current_state = await state.set_state(Practice.answering)
+    if current_state == Practice.answering:
+        return
     task_number = int(callback.data.split("_")[1])
     pool = await get_pool()
     result = await get_random_task(pool, task_number)
@@ -35,7 +48,7 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
 
     task_id, question, correct, wrong = result
     await state.update_data(task_number=task_number, task_id= task_id,correct=correct, streak=0)
-    await state.set_state(Practice.answering)
+
 
     options = [correct, wrong]
     random.shuffle(options)
@@ -48,6 +61,10 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
 
 @router.message(Practice.answering)
 async def handle_answer(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state == None:
+        return
+
     data = await state.get_data()
     task_number = data["task_number"]
     task_id = data['task_id']
@@ -113,7 +130,12 @@ async def handle_answer(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "repeat_task")
 async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_reply_markup(reply_markup=None)
+    try:
+        await callback.message.edit_reply_markup(reply_markup=None)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            pass
+
     data = await state.get_data()
     task_number =  data.get('task_number')
 
@@ -136,9 +158,13 @@ async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "practice")
 async def select_another_task(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_reply_markup(reply_markup=None)
-    await state.clear()
-    await practice(callback)
+    try:
+        await callback.message.edit_reply_markup(reply_markup=None)
+        await state.clear()
+        await practice(callback)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            pass
 
 
 @router.callback_query(F.data.startswith("explain_"))
@@ -156,7 +182,7 @@ async def select_another_task(callback: CallbackQuery):
     current_text = callback.message.text
     pool = await get_pool()
     async with pool.acquire() as conn:
-        explanation = await pool.fetchval(
+        explanation = await conn.fetchval(
         """
         SELECT explanation FROM questions
         WHERE id = $1;
@@ -165,4 +191,8 @@ async def select_another_task(callback: CallbackQuery):
     new_text = current_text + '\n\n' + explanation
 
     await callback.answer()
-    await callback.message.edit_text(new_text, reply_markup=wrong_answer_keyboard(), parse_mode='Markdown')
+    try:
+        await callback.message.edit_text(new_text, reply_markup=wrong_answer_keyboard(), parse_mode='Markdown')
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            pass

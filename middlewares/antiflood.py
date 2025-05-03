@@ -1,83 +1,99 @@
 import time
 from collections import defaultdict
-from typing import Callable, Dict, Any, Awaitable, List # Добавили List
+from typing import Callable, Dict, Any, Awaitable, List, Union
 from aiogram import BaseMiddleware
-from aiogram.types import Message # Работаем только с сообщениями
+from aiogram.types import Message, CallbackQuery
+import logging
 
-# Словарь для хранения времени последнего предупреждения для пользователя
-# Его можно вынести в Redis или другую базу для персистентности
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Dictionary to store the time of the last warning for each user
 user_warning_timestamps: Dict[int, float] = {}
 
-class AntiSpamMiddleware(BaseMiddleware): # Переименовано для ясности
+class AntiSpamMiddleware(BaseMiddleware):
     def __init__(self, limit: int = 7, time_window: int = 10, warning_cooldown: int = 60):
         """
-        Middleware для ограничения частоты сообщений (анти-спам).
+        Middleware for rate-limiting messages and callback queries (anti-flood).
 
-        :param limit: Максимальное количество сообщений.
-        :param time_window: Временное окно в секундах для подсчета сообщений.
-        :param warning_cooldown: Минимальный интервал в секундах между отправкой предупреждений одному пользователю.
+        :param limit: Maximum number of events (messages + callbacks) allowed.
+        :param time_window: Time window in seconds for counting events.
+        :param warning_cooldown: Minimum interval in seconds between warnings for a user.
         """
-        # defaultdict(list) хранит список временных меток для каждого user_id
-        self.user_message_timestamps: Dict[int, List[float]] = defaultdict(list)
+        # defaultdict(list) to store timestamps for each user_id
+        self.user_event_timestamps: Dict[int, List[float]] = defaultdict(list)
         self.limit = limit
         self.time_window = time_window
         self.warning_cooldown = warning_cooldown
-        # Глобальный словарь для времени предупреждений (или передать его в init)
         self.user_warning_timestamps = user_warning_timestamps
+        super().__init__()
 
     async def __call__(
         self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]], # Уточнили тип handler
-        event: Message, # Явно указываем, что ждем Message
+        handler: Callable[[Union[Message, CallbackQuery], Dict[str, Any]], Awaitable[Any]],
+        event: Union[Message, CallbackQuery],
         data: Dict[str, Any],
     ) -> Any:
-        # Проверка, что событие - это сообщение от пользователя (хотя регистрация на dp.message уже это подразумевает)
-        if not isinstance(event, Message) or not event.from_user:
-            # Если зарегистрировано на dp.update, эта проверка важна
-            # Если на dp.message, она может быть избыточна
-            return await handler(event, data) # Пропускаем другие типы событий
+        # Check if the event is a Message or CallbackQuery with a valid user
+        if not isinstance(event, (Message, CallbackQuery)) or not event.from_user:
+            logger.debug(f"Skipping event: {type(event).__name__} (no user or unsupported type)")
+            return await handler(event, data)
 
         user_id = event.from_user.id
         now = time.time()
 
-        # 1. Получаем список временных меток пользователя
-        timestamps = self.user_message_timestamps[user_id]
+        # Get the list of timestamps for the user
+        timestamps = self.user_event_timestamps[user_id]
 
-        # 2. Удаляем старые метки, которые вышли за пределы time_window
-        # Создаем новый список только с валидными (свежими) метками
+        # Remove timestamps older than the time window
         valid_timestamps = [ts for ts in timestamps if now - ts < self.time_window]
 
-        # 3. Добавляем время текущего сообщения
+        # Add the current event's timestamp
         valid_timestamps.append(now)
 
-        # 4. Сохраняем обновленный список меток для пользователя
-        self.user_message_timestamps[user_id] = valid_timestamps
+        # Update the user's timestamp list
+        self.user_event_timestamps[user_id] = valid_timestamps
 
-        # 5. Проверяем, превышен ли лимит сообщений
+        # Check if the event limit is exceeded
         if len(valid_timestamps) > self.limit:
-            # Лимит превышен - это спам!
+            # Limit exceeded - potential flood
             last_warning_time = self.user_warning_timestamps.get(user_id, 0)
 
-            # 6. Проверяем, не отправляли ли предупреждение недавно
+            # Check if we can send a warning (respecting cooldown)
             if now - last_warning_time > self.warning_cooldown:
-                # Обновляем время последнего предупреждения
+                # Update the last warning time
                 self.user_warning_timestamps[user_id] = now
-                # Отправляем сообщение пользователю
-                await event.answer(
-                    f"❗️ Обнаружено слишком много сообщений!\n"
-                    f"({len(valid_timestamps)} сообщ. за последние {self.time_window} сек).\n"
-                    f"Пожалуйста, подождите. Следующее предупреждение не ранее чем через {self.warning_cooldown} сек."
+
+                # Prepare warning message
+                warning_message = (
+                    f"❗️ Слишком много действий!\n"
+                    f"({len(valid_timestamps)} событий за последние {self.time_window} сек).\n"
+                    f"Пожалуйста, подождите. Следующее предупреждение через {self.warning_cooldown} сек."
                 )
-                # ВАЖНО: Останавливаем дальнейшую обработку этого сообщения
-                return None # handler НЕ будет вызван
+
+                try:
+                    if isinstance(event, Message):
+                        await event.answer(warning_message)
+                    elif isinstance(event, CallbackQuery):
+                        # Answer the callback to acknowledge it
+                        await event.answer("Слишком много действий! Подождите.", show_alert=True)
+                        # Send warning to the chat (if possible)
+                        if event.message:
+                            await event.message.answer(warning_message)
+                except Exception as e:
+                    logger.error(f"Failed to send warning to user {user_id}: {e}")
+
+                logger.info(f"Flood detected for user {user_id}: {len(valid_timestamps)} events")
+                return None  # Stop further processing
 
             else:
-                # Предупреждение уже было недавно, просто игнорируем сообщение молча
-                # Можно добавить тихое удаление сообщения, если бот - админ
-                # try:
-                #    await event.delete()
-                # except Exception: pass # Игнорируем ошибки удаления
-                return None # handler НЕ будет вызван
+                # Warning was sent recently; silently ignore the event
+                if isinstance(event, CallbackQuery):
+                    try:
+                        await event.answer()  # Acknowledge callback without alert
+                    except Exception as e:
+                        logger.debug(f"Failed to acknowledge callback for user {user_id}: {e}")
+                return None  # Stop further processing
 
-        # 7. Если лимит не превышен, продолжаем выполнение и вызываем следующий хендлер
+        # If limit is not exceeded, proceed with the handler
         return await handler(event, data)

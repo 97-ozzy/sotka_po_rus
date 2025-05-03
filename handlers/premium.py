@@ -11,7 +11,7 @@ from database.database import submit_payment, get_premium_users
 from keyboards.inline_kb import send_bill_keyboard
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 router = Router()
@@ -45,7 +45,10 @@ async def premium(callback: CallbackQuery):
             text, reply_markup=send_bill_keyboard(user_id, premium_status), parse_mode="Markdown", disable_web_page_preview=True
         )
     except TelegramBadRequest as e:
-        logger.error(f"Ошибка при редактировании сообщения: {e}")
+        if "message is not modified" in str(e):
+            # Message is already correct, no need to edit
+            pass
+        logger.error(f"Ошибка premium: {e}")
         await callback.message.answer(
             "Произошла ошибка. Пожалуйста, попробуй снова.", reply_markup=send_bill_keyboard(user_id, premium_status)
         )

@@ -16,7 +16,7 @@ async def setup_bot():
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
 
-    dp.message.middleware(AntiSpamMiddleware(11,10, 10))
+    dp.message.middleware(AntiSpamMiddleware(2,1, 10))
     dp.update.middleware(ErrorHandlerMiddleware(bot, ADMIN_IDS))
     dp.message.middleware(ActivityTrackerMiddleware())
 
