@@ -31,7 +31,7 @@ def setup_logging():
     # --- Консольный обработчик (как в Варианте 1) ---
     console_handler = StreamHandler(sys.stdout)
     console_handler.setFormatter(standard_formatter)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
 
     # --- Ротируемый текстовый файл (как в Варианте 1) ---
@@ -39,7 +39,7 @@ def setup_logging():
         filename=LOG_FILENAME_TEXT, maxBytes=5*1024*1024, backupCount=5, encoding='utf-8'
     )
     rotating_file_handler.setFormatter(standard_formatter)
-    rotating_file_handler.setLevel(logging.DEBUG)
+    rotating_file_handler.setLevel(logging.WARNING)
     logger.addHandler(rotating_file_handler)
 
     # --- Файл для JSON логов ---
