@@ -49,6 +49,7 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
 @router.message(Practice.answering)
 async def handle_answer(message: Message, state: FSMContext):
     data = await state.get_data()
+    print(message.chat.id)
     task_number = data["task_number"]
     task_id = data['task_id']
     correct_answer = data["correct"]
