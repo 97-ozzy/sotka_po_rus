@@ -19,3 +19,6 @@ class BuyPremiumStates(StatesGroup):
 
 class Premium(StatesGroup):
     moderating = State()
+
+class StatsState(StatesGroup):
+    waiting_for_date = State()

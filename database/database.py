@@ -86,8 +86,6 @@ async def init_dbs():
             user_id BIGINT NOT NULL,
             username TEXT,
             task_number INT NOT NULL,
-            total_attempts INT DEFAULT 0,
-            correct_attempts INT DEFAULT 0,
             longest_streak INT DEFAULT 0,
             PRIMARY KEY (user_id, task_number)
     );''')
@@ -202,5 +200,10 @@ async def remove_bill_from_db(sub_id):
                 ''', sub_id)
 
 
+def get_week_start(date: datetime = None) -> datetime.date:
+    date = date or datetime.now()
+    return (date - timedelta(days=date.weekday())).date()
 
+def get_previous_week_start() -> datetime.date:
+    return get_week_start(datetime.now() - timedelta(weeks=1))
 

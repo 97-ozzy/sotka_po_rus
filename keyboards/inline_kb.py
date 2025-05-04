@@ -39,8 +39,8 @@ def task_keyboard():
 def menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")],
-        [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
         [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
+        [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
         [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
         [InlineKeyboardButton(text="🆕 Добавить свои слова", callback_data="submit")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
@@ -103,4 +103,12 @@ def premium_moderation_keyboard(sub_id, user_id, username):
             InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{sub_id}_{user_id}_{username}")
         ],
         [InlineKeyboardButton(text="🚪 Выход", callback_data="menu")]
+    ])
+
+def period_selection_keyboard():
+    return  InlineKeyboardMarkup(inline_keyboard=[
+        #[InlineKeyboardButton(text="За все время", callback_data="period_all")],
+        #[InlineKeyboardButton(text="Ввести вручную", callback_data="period_custom")],
+        [InlineKeyboardButton(text="Предыдущая неделя", callback_data="period_previous")],
+        [InlineKeyboardButton(text="Эта неделя", callback_data="period_current")]
     ])
