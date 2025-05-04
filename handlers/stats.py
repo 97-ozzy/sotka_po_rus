@@ -1,8 +1,10 @@
 import datetime
-
+import logging
+from asyncio import exceptions
+from io import BytesIO
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, BufferedInputFile
 from database.database import get_pool, get_premium_users, get_week_start, get_previous_week_start
 from handlers.base import menu
 from keyboards.inline_kb import menu_and_buy_premium, period_selection_keyboard
@@ -123,3 +125,162 @@ async def show_weekly_stats(context: CallbackQuery | Message, week_start: dateti
         if "message is not modified" in str(e):
             # Message is already correct, no need to edit
             pass
+
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4, landscape
+
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+
+
+
+@router.callback_query(F.data == 'period_pdf')
+async def handle_period_pdf(callback: CallbackQuery):
+    try:
+        await callback.message.edit_text("Генерируем PDF-отчёт...")
+    except exceptions.TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            pass
+
+    user_id = callback.from_user.id
+    username = callback.from_user.username or str(user_id)  # Fallback to user_id if username is None
+    pool = await get_pool()
+
+    try:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                '''
+                SELECT task_number, week_start, attempts, correct
+                FROM weekly_stats
+                WHERE user_id = $1
+                ORDER BY week_start, task_number;
+                ''',
+                user_id
+            )
+
+        if not rows:
+            await callback.message.answer("У вас пока нет статистики для генерации отчёта.")
+            return
+
+        # Собираем данные в структуру
+        data_dict = {}
+        weeks = set()
+        tasks = set()
+
+        for row in rows:
+            task = row['task_number']
+            week = row['week_start']  # Store as datetime for sorting
+            accuracy = (row['correct'] / row['attempts']) * 100 if row['attempts'] else 0
+
+            if task not in data_dict:
+                data_dict[task] = {}
+            data_dict[task][week] = f"{accuracy:.1f}%"
+
+            weeks.add(week)
+            tasks.add(task)
+
+        # Сортируем недели и создаем метки с номерами
+        sorted_weeks = sorted(weeks)
+        week_labels = [f"{i+1} неделя" for i in range(len(sorted_weeks))]
+        logging.info(f"Assigned week labels: {week_labels}")
+
+        # Сортируем задания
+        sorted_tasks = sorted(tasks)
+
+        # Создаем матрицу данных
+        matrix = []
+        # Заголовок таблицы
+        header = ["Задание"] + week_labels
+        matrix.append(header)
+
+        for task in sorted_tasks:
+            row = [str(task)]
+            for week in sorted_weeks:
+                row.append(data_dict.get(task, {}).get(week, "-"))
+            matrix.append(row)
+
+        # Регистрация шрифта с поддержкой кириллицы
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            logging.info("Fonts DejaVuSans and DejaVuSans-Bold registered successfully")
+        except Exception as e:
+            logging.error(f"Failed to register fonts: {e}")
+            await callback.message.answer("Ошибка при загрузке шрифтов. Попробуйте позже.")
+            return
+
+        # Генерация PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=landscape(A4),
+            title=f"Статистика_{user_id}",
+            encoding='utf-8'
+        )
+
+        elements = []
+        styles = getSampleStyleSheet()
+
+        # Настройка стиля Title для поддержки кириллицы
+        styles['Title'].fontName = 'DejaVuSans-Bold'
+        styles['Title'].fontSize = 14
+        styles['Title'].leading = 16
+        logging.info(f"Title style set to font: {styles['Title'].fontName}")
+
+        # Заголовок
+        title = Paragraph(f"Статистика решений пользователя {username}", styles['Title'])
+        elements.append(title)
+
+        # Создаем таблицу
+        table = Table(matrix, colWidths=[50] + [60] * len(sorted_weeks))
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'DejaVuSans-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'DejaVuSans'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ])
+
+        # Добавляем чередующиеся цвета строк
+        for i in range(1, len(matrix), 2):
+            style.add('BACKGROUND', (0, i), (-1, i), colors.lightblue)
+
+        table.setStyle(style)
+        elements.append(table)
+
+        # Собираем документ
+        doc.build(elements)
+
+        # Отправка PDF
+        buffer.seek(0)
+        pdf_file = BufferedInputFile(buffer.read(), filename=f"table_stat_{user_id}.pdf")
+
+        try:
+
+            await callback.message.answer_document(
+                document=pdf_file,
+                caption="Табличная статистика по заданиям и неделям"
+            )
+            await menu(callback.message)
+        except exceptions.TelegramBadRequest as e:
+            if "message is not modified" in str(e):
+                pass
+            else:
+                logging.error(f"Telegram API error: {e}")
+                await callback.message.answer("Ошибка при отправке отчёта. Попробуйте позже.")
+
+    except Exception as e:
+        logging.error(f"PDF generation error: {e}")
+        await callback.message.answer("Ошибка при генерации отчёта. Попробуйте позже.")
+
+    finally:
+        buffer.close()
