@@ -24,8 +24,8 @@ async def practice(callback: CallbackQuery):
                          "№10 - приставки\n"
                          "№11 - суффиксы \n"
                          "№12 - глаголы\n"
-                         "№13 - НЕ слитно или раздельно\n"
-                         "№14 - слитно или раздельно\n"
+                         #"№13 - НЕ слитно или раздельно\n"
+                         #"№14 - слитно или раздельно\n"
                          "№15 - Н и НН", reply_markup=task_keyboard())
     except TelegramBadRequest as e:
         if "message is not modified" in str(e):

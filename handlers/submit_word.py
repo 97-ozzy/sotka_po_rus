@@ -65,12 +65,9 @@ async def process_submission(message: Message, state: FSMContext):
             parts = submission.split('.')
             if len(parts) < 3:
                 raise ValueError("❗ Неверный формат строки. Ожидается `<номер>.<правильное>.<неправильное>`.")
-
             task_part = parts[0].strip()
-            correct_word = parts[1].strip()
-            wrong_word = ".".join(parts[2:]).strip()
-
             try:
+
                 task_number = int(task_part)
             except ValueError:
                 raise ValueError(f"❗ Номер задания '{task_part}' должен быть целым числом.")
@@ -78,10 +75,13 @@ async def process_submission(message: Message, state: FSMContext):
             if task_number not in TASKS:
                 raise ValueError(f"❗ Неверный номер задания '{task_number}'. Допустимые номера: {valid_tasks_str}.")
 
+            correct_word = parts[1].strip().lower()  if task_number != 4 else parts[1].strip()
+            wrong_word = ".".join(parts[2:]).strip().lower() if task_number != 4 else ".".join(parts[2:]).strip()
+
             if not correct_word or not wrong_word:
                 raise ValueError("❗ Правильное и неправильное слова не могут быть пустыми.")
 
-            if correct_word.strip().lower() == wrong_word.strip().lower():
+            if correct_word == wrong_word:
                 raise ValueError("❗ Правильное и неправильное слова должны отличаться.")
 
             await submit_new_word(user_id, task_number, correct_word, wrong_word)
