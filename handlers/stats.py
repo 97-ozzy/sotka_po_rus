@@ -137,9 +137,6 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
-
-
 @router.callback_query(F.data == 'period_pdf')
 async def handle_period_pdf(callback: CallbackQuery):
     try:
@@ -177,10 +174,11 @@ async def handle_period_pdf(callback: CallbackQuery):
             task = row['task_number']
             week = row['week_start']  # Store as datetime for sorting
             accuracy = (row['correct'] / row['attempts']) * 100 if row['attempts'] else 0
+            attempts = row['attempts']
 
             if task not in data_dict:
                 data_dict[task] = {}
-            data_dict[task][week] = f"{accuracy:.1f}%"
+            data_dict[task][week] = {'accuracy': f"{accuracy:.1f}%", 'attempts': attempts}
 
             weeks.add(week)
             tasks.add(task)
@@ -188,26 +186,32 @@ async def handle_period_pdf(callback: CallbackQuery):
         # Сортируем недели и создаем метки с номерами
         sorted_weeks = sorted(weeks)
         week_labels = [f"{i+1} неделя" for i in range(len(sorted_weeks))]
+        logging.info(f"Assigned week labels: {week_labels}")
 
         # Сортируем задания
         sorted_tasks = sorted(tasks)
 
-        # Создаем матрицу данных
+        # Создаем матрицу данных (задания по горизонтали, недели по вертикали)
         matrix = []
         # Заголовок таблицы
-        header = ["Задание"] + week_labels
+        header = ["Неделя"] + [str(task) for task in sorted_tasks]
         matrix.append(header)
 
-        for task in sorted_tasks:
-            row = [str(task)]
-            for week in sorted_weeks:
-                row.append(data_dict.get(task, {}).get(week, "-"))
+        for week_idx, week in enumerate(sorted_weeks):
+            row = [week_labels[week_idx]]
+            for task in sorted_tasks:
+                cell_data = data_dict.get(task, {}).get(week, None)
+                if cell_data:
+                    row.append(f"{cell_data['accuracy']} | {cell_data['attempts']}")
+                else:
+                    row.append("-")
             matrix.append(row)
 
         # Регистрация шрифта с поддержкой кириллицы
         try:
             pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
             pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            logging.info("Fonts DejaVuSans and DejaVuSans-Bold registered successfully")
         except Exception as e:
             logging.error(f"Failed to register fonts: {e}")
             await callback.message.answer("Ошибка при загрузке шрифтов. Попробуйте позже.")
@@ -217,9 +221,13 @@ async def handle_period_pdf(callback: CallbackQuery):
         buffer = BytesIO()
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=landscape(A4),
+            pagesize=A4,
             title=f"Статистика_{user_id}",
-            encoding='utf-8'
+            encoding='utf-8',
+            leftMargin=36,
+            rightMargin=36,
+            topMargin=36,
+            bottomMargin=36
         )
 
         elements = []
@@ -227,16 +235,17 @@ async def handle_period_pdf(callback: CallbackQuery):
 
         # Настройка стиля Title для поддержки кириллицы
         styles['Title'].fontName = 'DejaVuSans-Bold'
-        styles['Title'].fontSize = 14
-        styles['Title'].leading = 16
+        styles['Title'].fontSize = 16
+        styles['Title'].leading = 18
+        logging.info(f"Title style set to font: {styles['Title'].fontName}")
 
-        # Настройка стиля Normal для пояснения
+        # Настройка стиля для пояснения (центрированный)
         explanation_style = ParagraphStyle(
             name='CenteredNormal',
             parent=styles['Normal'],
             fontName='DejaVuSans',
-            fontSize=12,
-            leading=14,
+            fontSize=14,
+            leading=16,
             alignment=TA_CENTER
         )
 
@@ -245,24 +254,29 @@ async def handle_period_pdf(callback: CallbackQuery):
         elements.append(title)
 
         # Пояснение перед таблицей
-        explanation = Paragraph("Точность ответов по неделям", explanation_style)
+        explanation = Paragraph("Точность ответов | Количество решенных задач", explanation_style)
         elements.append(Spacer(1, 12))  # Add space after title
         elements.append(explanation)
         elements.append(Spacer(1, 12))  # Add space after explanation
 
         # Создаем таблицу
-        table = Table(matrix, colWidths=[50] + [60] * len(sorted_weeks))
+        # Динамически вычисляем ширину столбцов (523 points available after margins)
+        num_columns = len(sorted_tasks) + 1
+        week_col_width = 80
+        task_col_width = min(60, (523 - week_col_width) / max(1, len(sorted_tasks)))
+        col_widths = [week_col_width] + [task_col_width] * len(sorted_tasks)
+        table = Table(matrix, colWidths=col_widths)
         style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'DejaVuSans-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ('BACKGROUND', (0, 1), (-1, -1), colors.white),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 1), (-1, -1), 'DejaVuSans'),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
         ])
 
         # Добавляем чередующиеся цвета строк
@@ -277,10 +291,9 @@ async def handle_period_pdf(callback: CallbackQuery):
 
         # Отправка PDF
         buffer.seek(0)
-        pdf_file = BufferedInputFile(buffer.read(), filename=f"table_stat_{user_id}.pdf")
+        pdf_file = BufferedInputFile(buffer.read(), filename=f"table_stat_{username}.pdf")
 
         try:
-
             await callback.message.answer_document(
                 document=pdf_file,
                 caption="Табличная статистика по заданиям и неделям"
