@@ -5,4 +5,3 @@ def answer_keyboard(options):
         keyboard=[[KeyboardButton(text=opt) for opt in options]],
         resize_keyboard=True
     )
-

@@ -1,5 +1,4 @@
-import datetime
-import time
+from datetime import datetime, timedelta
 import logging
 import asyncpg
 import random
@@ -92,6 +91,15 @@ async def init_dbs():
             longest_streak INT DEFAULT 0,
             PRIMARY KEY (user_id, task_number)
     );''')
+        await conn.execute('''
+                CREATE TABLE weekly_stats (
+    user_id BIGINT NOT NULL,
+    task_number INTEGER NOT NULL,
+    week_start DATE NOT NULL,
+    attempts INTEGER DEFAULT 0,
+    correct INTEGER DEFAULT 0,
+    PRIMARY KEY (user_id, task_number, week_start)
+);''')
 
 
 
@@ -168,8 +176,8 @@ async def get_pending_premium():
 
 async def set_premium_status(sub_id, user_id):
     pool = await get_pool()
-    current_datetime = datetime.datetime.now()
-    time_delta = datetime.timedelta(days=30)
+    current_datetime = datetime.now()
+    time_delta = timedelta(days=30)
     expire_date = current_datetime + time_delta
     async with pool.acquire() as conn:
         await conn.execute('''
@@ -192,4 +200,7 @@ async def remove_bill_from_db(sub_id):
                     DELETE FROM subscriptions
             WHERE id = $1
                 ''', sub_id)
+
+
+
 

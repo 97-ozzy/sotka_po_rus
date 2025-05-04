@@ -4,10 +4,11 @@ from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
+from datetime import datetime, timedelta
 
 from database.database import get_pool, get_random_task, get_premium_users
 from fsm import Practice
-from handlers.base import menu, to_menu
+from handlers.base import to_menu
 from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, \
     explain_wrong_answer_keyboard, buy_premium_wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
@@ -15,6 +16,9 @@ from keyboards.reply_kb import answer_keyboard
 router = Router()
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+
+def get_week_start(date: datetime) -> datetime:
+    return date - timedelta(days=date.weekday())
 
 @router.callback_query(F.data == 'start_practice')
 async def practice(callback: CallbackQuery):
@@ -63,7 +67,7 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
 @router.message(Practice.answering)
 async def handle_answer(message: Message, state: FSMContext):
     current_state = await state.get_state()
-    if current_state == None:
+    if current_state is None:
         return
 
     data = await state.get_data()
@@ -92,19 +96,33 @@ async def handle_answer(message: Message, state: FSMContext):
         username = message.from_user.username
         user_id = message.from_user.id
         async with pool.acquire() as conn:
-            await conn.execute(
-                """
-                INSERT INTO user_task_stats (user_id, task_number, total_attempts, correct_attempts, longest_streak, username)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (user_id, task_number) DO UPDATE
-                SET 
-                    total_attempts = user_task_stats.total_attempts + $3,
-                    correct_attempts = user_task_stats.correct_attempts + $4,
-                    longest_streak = GREATEST(user_task_stats.longest_streak, $5)
-                ;
-                """,
-                user_id, task_number, streak + 1, streak, streak, username
-            )
+            async with conn.transaction():
+                await conn.execute(
+                    """
+                    INSERT INTO user_task_stats (user_id, task_number, total_attempts, correct_attempts, longest_streak, username)
+                    VALUES ($1, $2, $3 + 1, $3, $3, $4)
+                    ON CONFLICT (user_id, task_number) DO UPDATE
+                    SET 
+                        total_attempts = user_task_stats.total_attempts + $3 +1,
+                        correct_attempts = user_task_stats.correct_attempts + $3,
+                        longest_streak = GREATEST(user_task_stats.longest_streak, $3)
+                    ;
+                    """,
+                    user_id, task_number, streak, username
+                )
+
+                current_date = datetime.now()
+                week_start = get_week_start(current_date).date()
+
+                await conn.execute('''
+                                INSERT INTO weekly_stats (user_id, task_number, week_start, attempts, correct)
+                                VALUES ($1, $2, $3, $4 + 1, $4)
+                                ON CONFLICT (user_id, task_number, week_start)
+                                DO UPDATE SET
+                                    attempts = weekly_stats.attempts + $4 +1,
+                                    correct = weekly_stats.correct + $4;
+                            ''', user_id, task_number, week_start, streak)
+
 
         longest_streak_in_db = await pool.fetchval(
             """
@@ -127,7 +145,7 @@ async def handle_answer(message: Message, state: FSMContext):
         await message.answer(text, reply_markup= explain_wrong_answer_keyboard(task_id))
 
         await state.update_data(streak=0)
-        #await state.set_state(Practice.waiting_restart)
+
 
 @router.callback_query(F.data == "repeat_task")
 async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
@@ -139,7 +157,7 @@ async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     task_number =  data.get('task_number')
-    if task_number == None:
+    if task_number is None:
         await to_menu(callback, state)
         return
 
