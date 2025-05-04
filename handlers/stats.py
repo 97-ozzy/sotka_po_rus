@@ -5,7 +5,15 @@ from io import BytesIO
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
+
 from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4, landscape
+
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from database.database import get_pool, get_premium_users, get_week_start, get_previous_week_start
 from handlers.base import menu
@@ -129,19 +137,11 @@ async def show_weekly_stats(context: CallbackQuery | Message, week_start: dateti
             pass
 
 
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.pagesizes import A4, landscape
-
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-
 @router.callback_query(F.data == 'period_pdf')
 async def handle_period_pdf(callback: CallbackQuery):
     try:
         await callback.message.edit_text("Генерируем PDF-отчёт...")
-    except exceptions.TelegramBadRequest as e:
+    except TelegramBadRequest as e:
         if "message is not modified" in str(e):
             pass
 
@@ -186,7 +186,6 @@ async def handle_period_pdf(callback: CallbackQuery):
         # Сортируем недели и создаем метки с номерами
         sorted_weeks = sorted(weeks)
         week_labels = [f"{i+1} неделя" for i in range(len(sorted_weeks))]
-        logging.info(f"Assigned week labels: {week_labels}")
 
         # Сортируем задания
         sorted_tasks = sorted(tasks)
@@ -202,7 +201,7 @@ async def handle_period_pdf(callback: CallbackQuery):
             for task in sorted_tasks:
                 cell_data = data_dict.get(task, {}).get(week, None)
                 if cell_data:
-                    row.append(f"{cell_data['accuracy']} | {cell_data['attempts']}")
+                    row.append(f"{cell_data['accuracy']}|{cell_data['attempts']}")
                 else:
                     row.append("-")
             matrix.append(row)
@@ -211,7 +210,6 @@ async def handle_period_pdf(callback: CallbackQuery):
         try:
             pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
             pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-            logging.info("Fonts DejaVuSans and DejaVuSans-Bold registered successfully")
         except Exception as e:
             logging.error(f"Failed to register fonts: {e}")
             await callback.message.answer("Ошибка при загрузке шрифтов. Попробуйте позже.")
@@ -237,7 +235,6 @@ async def handle_period_pdf(callback: CallbackQuery):
         styles['Title'].fontName = 'DejaVuSans-Bold'
         styles['Title'].fontSize = 16
         styles['Title'].leading = 18
-        logging.info(f"Title style set to font: {styles['Title'].fontName}")
 
         # Настройка стиля для пояснения (центрированный)
         explanation_style = ParagraphStyle(
@@ -254,7 +251,7 @@ async def handle_period_pdf(callback: CallbackQuery):
         elements.append(title)
 
         # Пояснение перед таблицей
-        explanation = Paragraph("Точность ответов | Количество решенных задач", explanation_style)
+        explanation = Paragraph("Точность ответов | Количество решенных заданий", explanation_style)
         elements.append(Spacer(1, 12))  # Add space after title
         elements.append(explanation)
         elements.append(Spacer(1, 12))  # Add space after explanation
@@ -263,7 +260,7 @@ async def handle_period_pdf(callback: CallbackQuery):
         # Динамически вычисляем ширину столбцов (523 points available after margins)
         num_columns = len(sorted_tasks) + 1
         week_col_width = 80
-        task_col_width = min(60, (523 - week_col_width) / max(1, len(sorted_tasks)))
+        task_col_width = min(90, (523 - week_col_width) / max(1, num_columns))
         col_widths = [week_col_width] + [task_col_width] * len(sorted_tasks)
         table = Table(matrix, colWidths=col_widths)
         style = TableStyle([
@@ -299,7 +296,7 @@ async def handle_period_pdf(callback: CallbackQuery):
                 caption="Табличная статистика по заданиям и неделям"
             )
             await menu(callback.message)
-        except exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:
             if "message is not modified" in str(e):
                 pass
             else:
