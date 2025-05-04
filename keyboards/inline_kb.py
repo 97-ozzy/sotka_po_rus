@@ -107,7 +107,7 @@ def premium_moderation_keyboard(sub_id, user_id, username):
 
 def period_selection_keyboard():
     return  InlineKeyboardMarkup(inline_keyboard=[
-        #[InlineKeyboardButton(text="За все время", callback_data="period_all")],
+        [InlineKeyboardButton(text="За все время", callback_data="period_all")],
         #[InlineKeyboardButton(text="Ввести вручную", callback_data="period_custom")],
         [InlineKeyboardButton(text="Предыдущая неделя", callback_data="period_previous")],
         [InlineKeyboardButton(text="Эта неделя", callback_data="period_current")]

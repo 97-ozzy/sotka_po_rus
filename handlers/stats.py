@@ -31,44 +31,48 @@ async def user_stats(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'period_all')
 async def handle_period_all(callback: CallbackQuery):
-        pool = await get_pool()
-        async with pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
-                SELECT task_number, total_attempts, correct_attempts, longest_streak
-                FROM user_task_stats
-                WHERE user_id = $1
-                ORDER BY task_number;
-                """,
-                callback.from_user.id
-            )
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        # Получаем агрегированную статистику за все время из weekly_stats
+        rows = await conn.fetch(
+            '''
+            SELECT 
+                task_number,
+                SUM(attempts) as total_attempts,
+                SUM(correct) as total_correct
+            FROM weekly_stats
+            WHERE user_id = $1
+            GROUP BY task_number
+            ORDER BY task_number;
+            ''',
+            callback.from_user.id
+        )
 
-        if not rows:
-            await callback.message.answer("У тебя пока нет статистики. Попробуйте решать задания  🎯")
-            return
+    if not rows:
+        await callback.message.answer("У вас пока нет статистики за любой период.")
+        return
 
-        text = "📊 Статистика за все время:\n\n"
-        for row in rows:
-            task_number = row["task_number"]
-            total = row["total_attempts"]
-            correct = row["correct_attempts"]
-            streak = row["longest_streak"]
-            accuracy = (correct / total) * 100 if total else 0
-            text += (
-                f"➤ №{task_number}\n"
-                f"  - Решено: {total}\n"
-                f"  - Верных: {correct}\n"
-                f"  - Точность: {accuracy:.1f}%\n"
-                f"  - Самая длинная серия: {streak}\n\n"
-            )
+    text = "📊 Ваша статистика за все время:\n\n"
+    for row in rows:
+        task_number = row["task_number"]
+        total = row["total_attempts"]
+        correct = row["total_correct"]
+        accuracy = (correct / total) * 100 if total else 0
 
-        try:
-            await callback.message.edit_text(text)
-            await menu(callback.message)
-        except TelegramBadRequest as e:
-            if "message is not modified" in str(e):
+        text += (
+            f"➤ Задание №{task_number}:\n"
+            f"  • Всего попыток: {total}\n"
+            f"  • Верных решений: {correct}\n"
+            f"  • Точность: {accuracy:.1f}%\n\n"
+        )
+
+    try:
+        await callback.message.edit_text(text)
+        await menu(callback.message)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
                 # Message is already correct, no need to edit
-                pass
+            pass
 
 @router.callback_query(F.data == 'period_current')
 async def handle_period_current(callback: CallbackQuery):
