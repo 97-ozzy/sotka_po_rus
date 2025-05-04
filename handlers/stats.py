@@ -5,6 +5,8 @@ from io import BytesIO
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
+from reportlab.lib.enums import TA_CENTER
+
 from database.database import get_pool, get_premium_users, get_week_start, get_previous_week_start
 from handlers.base import menu
 from keyboards.inline_kb import menu_and_buy_premium, period_selection_keyboard
@@ -127,9 +129,9 @@ async def show_weekly_stats(context: CallbackQuery | Message, week_start: dateti
             pass
 
 
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import A4, landscape
 
 from reportlab.pdfbase import pdfmetrics
@@ -186,7 +188,6 @@ async def handle_period_pdf(callback: CallbackQuery):
         # Сортируем недели и создаем метки с номерами
         sorted_weeks = sorted(weeks)
         week_labels = [f"{i+1} неделя" for i in range(len(sorted_weeks))]
-        logging.info(f"Assigned week labels: {week_labels}")
 
         # Сортируем задания
         sorted_tasks = sorted(tasks)
@@ -207,7 +208,6 @@ async def handle_period_pdf(callback: CallbackQuery):
         try:
             pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
             pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-            logging.info("Fonts DejaVuSans and DejaVuSans-Bold registered successfully")
         except Exception as e:
             logging.error(f"Failed to register fonts: {e}")
             await callback.message.answer("Ошибка при загрузке шрифтов. Попробуйте позже.")
@@ -229,11 +229,26 @@ async def handle_period_pdf(callback: CallbackQuery):
         styles['Title'].fontName = 'DejaVuSans-Bold'
         styles['Title'].fontSize = 14
         styles['Title'].leading = 16
-        logging.info(f"Title style set to font: {styles['Title'].fontName}")
+
+        # Настройка стиля Normal для пояснения
+        explanation_style = ParagraphStyle(
+            name='CenteredNormal',
+            parent=styles['Normal'],
+            fontName='DejaVuSans',
+            fontSize=12,
+            leading=14,
+            alignment=TA_CENTER
+        )
 
         # Заголовок
         title = Paragraph(f"Статистика решений пользователя {username}", styles['Title'])
         elements.append(title)
+
+        # Пояснение перед таблицей
+        explanation = Paragraph("Точность ответов по неделям", explanation_style)
+        elements.append(Spacer(1, 12))  # Add space after title
+        elements.append(explanation)
+        elements.append(Spacer(1, 12))  # Add space after explanation
 
         # Создаем таблицу
         table = Table(matrix, colWidths=[50] + [60] * len(sorted_weeks))
