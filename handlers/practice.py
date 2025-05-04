@@ -7,6 +7,7 @@ from aiogram.fsm.context import FSMContext
 
 from database.database import get_pool, get_random_task, get_premium_users
 from fsm import Practice
+from handlers.base import menu, to_menu
 from keyboards.inline_kb import task_keyboard, wrong_answer_keyboard, \
     explain_wrong_answer_keyboard, buy_premium_wrong_answer_keyboard
 from keyboards.reply_kb import answer_keyboard
@@ -126,7 +127,7 @@ async def handle_answer(message: Message, state: FSMContext):
         await message.answer(text, reply_markup= explain_wrong_answer_keyboard(task_id))
 
         await state.update_data(streak=0)
-        await state.set_state(Practice.waiting_restart)
+        #await state.set_state(Practice.waiting_restart)
 
 @router.callback_query(F.data == "repeat_task")
 async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
@@ -138,6 +139,9 @@ async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     task_number =  data.get('task_number')
+    if task_number == None:
+        await to_menu(callback, state)
+        return
 
     pool = await get_pool()
     result = await get_random_task(pool, task_number)

@@ -36,9 +36,9 @@ async def menu(message: Message):
 @router.callback_query(F.data == "menu")
 async def to_menu(callback: CallbackQuery, state: FSMContext):
     try:
+        await menu(callback.message)
         await callback.message.edit_reply_markup(reply_markup=None)
         await state.clear()
-        await menu(callback.message)
     except TelegramBadRequest as e:
         if "message is not modified" in str(e):
             # Message is already correct, no need to edit
