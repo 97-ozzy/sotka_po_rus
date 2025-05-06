@@ -153,7 +153,7 @@ async def submit_new_word(user_id, task_number, correct_word, wrong_word):
 
 
 
-async def set_premium_status(user_id):
+async def set_premium_status(user_id, payment_id):
     user_id = int(user_id)
     pool = await get_pool()
     current_datetime = datetime.now()
@@ -162,9 +162,9 @@ async def set_premium_status(user_id):
     async with pool.acquire() as conn:
         await conn.execute('''
                     UPDATE users
-                    SET premium=TRUE, premium_expires_date = $1
-                    WHERE user_id = $2
-                ''', expire_date, user_id)
+                    SET premium=TRUE, premium_expires_date = $1, payment_id = $2
+                    WHERE user_id = $3
+                ''', expire_date, payment_id, user_id)
 
 
 

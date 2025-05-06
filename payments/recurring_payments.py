@@ -16,7 +16,6 @@ Configuration.secret_key = UKASSA_TOKEN
 
 
 async def create_recurring_payment(user_id: int, saved_payment_method_id: str = None):
-    """Создает автоплатеж для продления премиум-подписки."""
     try:
         payment_params = {
             "amount": {
@@ -46,7 +45,7 @@ async def create_recurring_payment(user_id: int, saved_payment_method_id: str = 
         return payment
     except Exception as e:
         logger.error(f"Ошибка при создании платежа для пользователя {user_id}: {e}")
-        return None
+        return payment.id
 
 async def process_expiring_subscriptions():
     """Обрабатывает пользователей с истекающим сегодня премиумом."""

@@ -122,10 +122,9 @@ async def check_payment_status(callback: CallbackQuery, state: FSMContext):
 
     if payment.status == "succeeded":
         # Обновление статуса премиум в базе данных
-        await set_premium_status(user_id)
+        await set_premium_status(user_id, payment.payment_method['id'])
         await clear_cache()
 
-        #await submit_payment(user_id, PREMIUM_PRICE_RUB, payment_id)
         await message.edit_reply_markup()
         await message.answer(
             "🎉 *Оплата подтверждена успешно!* 🎉",
