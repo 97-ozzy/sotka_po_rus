@@ -47,7 +47,8 @@ async def init_dbs():
         premium BOOLEAN DEFAULT FALSE,
         premium_expires DATE DEFAULT CURRENT_DATE,
         submission_count INTEGER DEFAULT 0,
-        registration_date DATE DEFAULT CURRENT_DATE
+        registration_date DATE DEFAULT CURRENT_DATE,
+        payment_method_id TEXT
     );
 """)
 
@@ -176,7 +177,7 @@ async def submit_first_payment_info(user_id, payment_method_id):
     async with pool.acquire() as conn:
         await conn.execute('''
                         UPDATE users
-                        SET premium=TRUE, premium_expires_date = $1, payment_id = $2
+                        SET premium=TRUE, premium_expires_date = $1, payment_method_id = $2
                         WHERE user_id = $3
                     ''', expire_date, payment_method_id, user_id)
 
@@ -191,10 +192,10 @@ async def submit_payment(user_id, premium_price_rub, today, payment_id):
 async def get_expiring_premium_users(current_date):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.execute('''
+        rows = await conn.fetch('''
             SELECT user_id, payment_method_id 
             FROM users 
-            WHERE premium_expires_date = $1
+            WHERE premium_expires_date = $1 and payment_method_id != '-'
                         ''', current_date)
         return rows
 

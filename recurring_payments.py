@@ -15,7 +15,7 @@ Configuration.account_id = SHOP_ID
 Configuration.secret_key = UKASSA_TOKEN
 
 
-async def create_recurring_payment(user_id: int, saved_payment_method_id: str = None):
+async def create_recurring_payment(user_id, saved_payment_method_id):
     try:
         payment_params = {
             "amount": {
@@ -46,13 +46,14 @@ async def process_expiring_subscriptions():
     """Обрабатывает пользователей с истекающим сегодня премиумом."""
     today = date.today()
     expiring_users = await get_expiring_premium_users(today)
+    print(expiring_users)
 
     if not expiring_users:
         logger.info("Нет пользователей с истекающим премиумом сегодня.")
         return
 
     for user in expiring_users:
-        user_id = user["id"]
+        user_id = user["user_id"]
         saved_payment_method_id = user.get("payment_method_id")  # Предполагается, что это поле хранится в БД
         logger.info(f"Обработка автопродления для пользователя {user_id}")
 

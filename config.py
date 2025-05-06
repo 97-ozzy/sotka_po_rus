@@ -12,7 +12,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
-
 ADMIN_IDS = os.getenv("ADMIN_IDS")
 
 ADMIN_IDS = ADMIN_IDS.split(',')
