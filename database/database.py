@@ -150,29 +150,11 @@ async def submit_new_word(user_id, task_number, correct_word, wrong_word):
             VALUES ($1, $2, $3, $4)
         ''', user_id, task_number, correct_word, wrong_word)
 
-async def submit_payment(user_id,username, file):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('''
-            INSERT INTO subscriptions (user_id, username, file)
-            VALUES ($1, $2, $3)
-        ''', user_id, username, file)
 
 
 
-async def get_pending_premium():
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow('''
-                SELECT id, user_id, username, file, time
-                FROM subscriptions
-                WHERE is_viewed = FALSE
-                ORDER BY time DESC
-                LIMIT 1
-            ''')
-        return row
-
-async def set_premium_status(sub_id, user_id):
+async def set_premium_status(user_id):
+    user_id = int(user_id)
     pool = await get_pool()
     current_datetime = datetime.now()
     time_delta = timedelta(days=30)
@@ -183,21 +165,7 @@ async def set_premium_status(sub_id, user_id):
                     SET premium=TRUE, premium_expires_date = $1
                     WHERE user_id = $2
                 ''', expire_date, user_id)
-        await conn.execute(
-            '''
-            UPDATE subscriptions
-            SET is_viewed = TRUE
-            WHERE id = $1
-            ''', sub_id)
 
-
-async def remove_bill_from_db(sub_id):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('''
-                    DELETE FROM subscriptions
-            WHERE id = $1
-                ''', sub_id)
 
 
 def get_week_start(date: datetime = None) -> datetime.date:
