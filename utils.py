@@ -1,6 +1,4 @@
 import csv
-import asyncpg
-from typing import List, Tuple
 import asyncio
 
 from database.database import get_pool
@@ -20,16 +18,16 @@ async def update_explanations(csv_file_path: str):
                 task_number, wrong_answer, correct_answer, question, word, explanation =row
 
                 task_number=int(task_number)
-                # Check if word exists in questions_test table
+                # Check if word exists in questions table
                 existing = await conn.fetchrow(
-                    "SELECT word FROM questions_test WHERE word = $1 and task_number = $2", word, task_number
+                    "SELECT word FROM questions WHERE word = $1 and task_number = $2", word, task_number
                 )
 
                 if existing:
                     # Update explanation if word exists
                     await conn.execute(
                         """
-                        UPDATE questions_test 
+                        UPDATE questions 
                         SET explanation = $1 
                         WHERE word = $2 and task_number = $3
                         """,
@@ -39,7 +37,7 @@ async def update_explanations(csv_file_path: str):
                     # Insert new record if word doesn't exist
                     await conn.execute(
                         """
-                        INSERT INTO questions_test (
+                        INSERT INTO questions (
                             task_number, 
                             wrong_answer, 
                             correct_answer, 
@@ -68,7 +66,7 @@ async def update_task9_ng():
         rows = await conn.fetch(
             """
             SELECT question, correct_answer, word 
-            FROM questions_test 
+            FROM questions 
             WHERE task_number = 9 AND explanation LIKE '%(НГ)%'
             """
         )
@@ -87,7 +85,7 @@ async def update_task9_ng():
 
             await conn.execute(
                 """
-                UPDATE questions_test 
+                UPDATE questions 
                 SET explanation = $1 
                 WHERE task_number = 9 AND word = $2
                 """,
@@ -97,8 +95,8 @@ async def update_task9_ng():
 
 
 async def main():
-   await update_explanations('9_upd - 9_upd (1).csv')
-   await update_task9_ng()
+   await update_explanations('utils/9_upd - 9_upd (копия) (1).csv')
+   #await update_task9_ng()
 
 
 if __name__ == "__main__":
