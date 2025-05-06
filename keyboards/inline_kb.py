@@ -10,16 +10,24 @@ def menu_and_buy_premium():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="💎 Оформить премиум", callback_data="premium")]
+
     ])
+
+
+
 def send_bill_keyboard(user_id, premium_status):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="🧾 Отправить чек", callback_data="send_bill")],
-        [InlineKeyboardButton(text="Т-БАНК", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
-        [InlineKeyboardButton(text="СБЕРБАНК", url="https://www.sberbank.com/sms/pbpn?requisiteNumber=79272323738")]
+        [InlineKeyboardButton(text="❤️ Поддержать (Т-БАНК)", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="❤️ Поддержать (СБЕРБАНК)", url="https://www.sberbank.com/sms/pbpn?requisiteNumber=79272323738")],
+        [InlineKeyboardButton(text="💎 ОФОРМИТЬ ПРЕМИУМ", callback_data='pay_premium')]
+
     ]) if user_id not in premium_status else InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="❤️ Поддержать проект", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="❤️ Поддержать Т-БАНК",
+                              url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="❤️ Поддержать СБЕРБАНК",
+                              url="https://www.sberbank.com/sms/pbpn?requisiteNumber=79272323738")]
     ])
 
 def task_keyboard():
@@ -77,24 +85,7 @@ def moderation_keyboard(sub_id, user_id, correct_word):
         [InlineKeyboardButton(text="🚪 Выход", callback_data="moderation_exit")]
     ])
 
-def buy_premium_keyboard():
-    return  InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Купить Премиум за 20₽",
-                    callback_data="buy_premium"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Поддержать проект ❤️",
-                    callback_data="support_project"
-                )
-            ],
-            [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
-        ]
-    )
+
 
 def premium_moderation_keyboard(sub_id, user_id, username):
     return  InlineKeyboardMarkup(inline_keyboard=[

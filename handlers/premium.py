@@ -1,12 +1,12 @@
 import logging
 import time
-
+import uuid
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
-
+from yookassa import Configuration, Payment
 from database.database import submit_payment, get_premium_users
 from keyboards.inline_kb import send_bill_keyboard
 
@@ -16,95 +16,128 @@ logger = logging.getLogger(__name__)
 
 router = Router()
 
-PREMIUM_PRICE_RUB =60
-ALLOWED_FILE_TYPES = ['photo']  # Допустимые типы файлов
-ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png']  # Допустимые расширения для документов
-TIMEOUT_SECONDS = 7*60  # Время ожидания чека (5 минут)
+PREMIUM_PRICE_RUB = 40
+ALLOWED_FILE_TYPES = ['photo']
+ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png']
+TIMEOUT_SECONDS = 7 * 60
+
+# Настройка YooKassa
+Configuration.account_id = '1080022'
+Configuration.secret_key = 'test_2rRoFU0aQ_TcGWpkqXG3VXrMzhgf8qzMGyi8IceADIU'
 
 
 class BuyPremiumStates(StatesGroup):
     waiting_for_bill = State()
+    waiting_for_payment_confirmation = State()
 
 
 @router.callback_query(F.data == 'premium')
-async def premium(callback: CallbackQuery):
+async def premium(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
     premium_status = await get_premium_users()
+
     text = (
         '🌟 ПРЕМИУМ ПОДПИСКА 🌟\n\n'
         '📚 Пояснения к ответам - объяснения в один клик в самом удобном формате\n\n'
-        #'🤯 Spaced Repetition - умная система, подбирающая слова под твои слабые места\n\n'
         '📊 Подробная статистика по каждому заданию - отслеживай свой прогресс\n\n'
-        #'📌 Cписок твоих ошибкоопасных слов - слова в которых ты неоднократно ошибся\n\n'
         f'Стоимость - *всего {PREMIUM_PRICE_RUB} рублей в месяц* 💎\n\n'
-        'Также ты можешь отправить любую сумму *на развитие проекта*  ❤️\n\n'
-        
+        'Также ты можешь отправить любую сумму *на развитие проекта* ❤️\n\n'
     )
-    text+= "🎉 *У тебя есть премиум* 🎉" if user_id in premium_status else   "После оплаты отправь боту скриншот чека."
+    text += "🎉 *У тебя есть премиум* 🎉" if user_id in premium_status else "Нажми кнопку ниже для оплаты."
+
     try:
         await callback.message.edit_text(
-            text, reply_markup=send_bill_keyboard(user_id, premium_status), parse_mode="Markdown", disable_web_page_preview=True
+            text,
+            reply_markup=send_bill_keyboard(user_id, premium_status),
+            parse_mode="Markdown",
+            disable_web_page_preview=True
         )
     except TelegramBadRequest as e:
         if "message is not modified" in str(e):
-            # Message is already correct, no need to edit
             pass
-        logger.error(f"Ошибка premium: {e}")
-        await callback.message.answer(
-            "Произошла ошибка. Пожалуйста, попробуй снова.", reply_markup=send_bill_keyboard(user_id, premium_status)
-        )
+        else:
+            logger.error(f"Ошибка premium: {e}")
+            await callback.message.answer(
+                "Произошла ошибка. Пожалуйста, попробуй снова.",
+                reply_markup=send_bill_keyboard(user_id, premium_status)
+            )
 
 
-@router.callback_query(F.data == 'send_bill')
-async def send_bill(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(BuyPremiumStates.waiting_for_bill)
-    await callback.message.answer(
-        "📸 Пожалуйста, отправь скриншот чека.\n"
-        f"У тебя есть {TIMEOUT_SECONDS // 60} минут, чтобы отправить чек."
-    )
-    # Устанавливаем таймер для очистки состояния
-    await state.update_data(start_time=time.time())
+@router.callback_query(F.data == 'pay_premium')
+async def initiate_payment(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
 
+    # Создание платежа
+    payment = Payment.create({
+        "amount": {
+            "value": f"{PREMIUM_PRICE_RUB}.00",
+            "currency": "RUB"
+        },
+        "confirmation": {
+            "type": "redirect",
+            "return_url": "https://t.me/test_sotkapr_bot"
+        },
+        "capture": True,
+        "save_payment_method": True,
+        "description": f"Премиум подписка для пользователя {user_id}",
+        "metadata": {
+            "user_id": str(user_id)
+        }
+    })
 
-@router.message(BuyPremiumStates.waiting_for_bill)
-async def get_bill(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    username = message.from_user.username
-    state_data = await state.get_data()
-    start_time = state_data.get('start_time', time.time())
+    # Сохранение ID платежа в состоянии
+    await state.update_data(payment_id=payment.id)
+    await state.set_state(BuyPremiumStates.waiting_for_payment_confirmation)
 
-    # Проверка таймаута
-    if time.time() - start_time > TIMEOUT_SECONDS:
-        await message.answer(
-            "⏰ Время ожидания чека истекло. Пожалуйста, начни процесс оплаты заново."
-        )
-        await state.clear()
-        return
-
-    # Проверка на наличие фото или документа
-    if not message.photo:
-        await message.answer(
-            "❌ Пожалуйста, отправь скриншот чека.\n"
-            "Попробуй снова."
-        )
-        return
-
-
-    # Получение file_id
-    file_id = message.photo[-1].file_id
+    payment_link = payment.confirmation.confirmation_url
 
     try:
-        # Сохранение чека в базе данных
-        await submit_payment(user_id,username, file_id)
-        await message.answer(
-            "✅ Спасибо! Чек принят. Если всё верно, скоро получишь премиум-доступ 💎"
+        await callback.message.edit_text(
+            f"Перейди по ссылке для оплаты:\n{payment_link}\n\n"
+            "После оплаты вернись сюда и дождись подтверждения.",
+            parse_mode="Markdown",
+            disable_web_page_preview=True
         )
-        logger.info(f"Чек успешно обработан для пользователя {user_id}, file_id: {file_id}")
-    except Exception as e:
-        logger.error(f"Ошибка при сохранении чека для пользователя {user_id}: {e}")
-        await message.answer(
-            "😔 Произошла ошибка при обработке чека. Пожалуйста, попробуй снова или свяжитесь с поддержкой."
+    except TelegramBadRequest as e:
+        logger.error(f"Ошибка при отправке ссылки на оплату: {e}")
+        await callback.message.answer(
+            "Произошла ошибка при создании платежа. Попробуй снова."
         )
-    finally:
-        await state.clear()
 
+
+@router.message(BuyPremiumStates.waiting_for_payment_confirmation)
+async def check_payment_status(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    state_data = await state.get_data()
+    payment_id = state_data.get('payment_id')
+
+    if not payment_id:
+        await message.answer("Ошибка: платеж не найден. Попробуй начать заново.")
+        await state.clear()
+        return
+
+    # Проверка статуса платежа
+    payment = Payment.find_one(payment_id)
+    print(payment.status)
+
+    if payment.status == "succeeded":
+        # Обновление статуса премиум в базе данных
+        print(user_id)
+
+        await submit_payment(user_id, PREMIUM_PRICE_RUB, payment_id)
+
+        await message.answer(
+            "🎉 Оплата успешно подтверждена! Премиум-статус активирован!",
+            parse_mode="Markdown"
+        )
+        await state.clear()
+    elif payment.status == "canceled":
+        await message.answer(
+            "Оплата была отменена. Попробуй снова.",
+            reply_markup=send_bill_keyboard(user_id, await get_premium_users())
+        )
+        await state.clear()
+    else:
+        await message.answer(
+            "Платеж еще не обработан. Пожалуйста, подожди немного и попробуй снова."
+        )
