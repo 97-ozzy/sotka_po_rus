@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 import uuid
@@ -9,7 +10,7 @@ from aiogram.types import Message, CallbackQuery
 from yookassa import Configuration, Payment
 
 from config import RENEWAL_RETURN_URL, PREMIUM_PRICE_RUB, UKASSA_TOKEN, SHOP_ID
-from database.database import get_premium_users, set_premium_status, clear_cache
+from database.database import get_premium_users, clear_cache, submit_first_payment_info, submit_payment
 from handlers.base import to_menu
 from keyboards.inline_kb import send_bill_keyboard, confirm_payment_button
 
@@ -122,12 +123,13 @@ async def check_payment_status(callback: CallbackQuery, state: FSMContext):
 
     if payment.status == "succeeded":
         # Обновление статуса премиум в базе данных
-        await set_premium_status(user_id, payment.payment_method['id'])
+        await submit_first_payment_info(user_id, payment.payment_method['id'])
+        await submit_payment(user_id, PREMIUM_PRICE_RUB, datetime.datetime.now(),payment_id)
         await clear_cache()
 
         await message.edit_reply_markup()
         await message.answer(
-            "🎉 *Оплата подтверждена успешно!* 🎉",
+            "🎉 *Оплата подтверждена. Премиум активирован!* 🎉",
             parse_mode="Markdown"
         )
         await to_menu(callback, state)

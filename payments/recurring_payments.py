@@ -31,14 +31,9 @@ async def create_recurring_payment(user_id: int, saved_payment_method_id: str = 
             "metadata": {
                 "user_id": str(user_id),
                 "is_recurring": "true"
-            }
+            },
+            'payment_method_id':saved_payment_method_id
         }
-
-        # Если есть сохраненный метод оплаты, используем его
-        if saved_payment_method_id:
-            payment_params["payment_method_id"] = saved_payment_method_id
-        else:
-            payment_params["save_payment_method"] = True
 
         payment = Payment.create(payment_params)
         logger.info(f"Создан платеж {payment.id} для пользователя {user_id}")
@@ -58,7 +53,7 @@ async def process_expiring_subscriptions():
 
     for user in expiring_users:
         user_id = user["id"]
-        saved_payment_method_id = user.get("saved_payment_method_id")  # Предполагается, что это поле хранится в БД
+        saved_payment_method_id = user.get("payment_method_id")  # Предполагается, что это поле хранится в БД
         logger.info(f"Обработка автопродления для пользователя {user_id}")
 
         payment = await create_recurring_payment(user_id, saved_payment_method_id)
@@ -73,7 +68,7 @@ async def process_expiring_subscriptions():
                 new_expiration = today.replace(month=today.month + 1)
                 await update_premium_status(user_id, True)
                 await update_premium_expiration(user_id, new_expiration)
-                await submit_payment(user_id, PREMIUM_PRICE_RUB, payment.id)
+                await submit_payment(user_id, PREMIUM_PRICE_RUB, today, payment.id)
                 logger.info(f"Премиум продлен для пользователя {user_id} до {new_expiration}")
                 break
             elif payment.status == "canceled":
