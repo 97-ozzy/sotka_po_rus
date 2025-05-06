@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import logging
 import asyncpg
 import random
@@ -137,9 +137,10 @@ async def add_user_to_db(user_id: int, username: str):
             "SELECT 1 FROM users WHERE user_id = $1", user_id
         )
         if not user_exists:
+            premium_expires_date = date.today() + timedelta(days=3)
             await conn.execute(
-                "INSERT INTO users (user_id, username) VALUES ($1, $2)",
-                user_id, username
+                "INSERT INTO users (user_id, username, premium, premium_expires_date) VALUES ($1, $2, $3, $4)",
+                user_id, username, True, premium_expires_date
             )
 
 async def submit_new_word(user_id, task_number, correct_word, wrong_word):
