@@ -22,8 +22,9 @@ async def start(message: Message):
         '🤯 Spaced Repetition - умная система интервального повторения \n'
         '⚡️Блиц формат - не даст потерять интерес, почти как лента в тик токе\n'
         '💡Объяснения - правила в один клик, коротко и по факту\n'
-        '📊 Статистика за неделю - она поможет отслеживать прогресс\n\n\n\n'
-         '🥳*Первые 3 дня премиум бесплатно*🥳', parse_mode='Markdown'
+        '📊 Статистика за неделю - она поможет отслеживать прогресс\n'
+         '[Terms Of Use →](https://telegra.ph/Polzovatelskoe-soglashenie-dlya-Telegram-bota-Sotka-Po-Russkomu-05-07)\n\n\n\n'
+         '🥳*Первые 3 дня премиум бесплатно*🥳\n', parse_mode='Markdown'
          )
     await menu(message)
 
