@@ -87,18 +87,10 @@ def buy_premium_wrong_answer_keyboard():
 
 def period_selection_keyboard():
     return  InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="По каждой неделе (PDF)", callback_data="period_pdf")],
         [InlineKeyboardButton(text="За все время", callback_data="period_all")],
         [InlineKeyboardButton(text="Предыдущая неделя", callback_data="period_previous")],
         [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")]
     ])
 #---------------------------------------------------------------------------------------------
-
-def premium_moderation_keyboard(sub_id, user_id, username):
-    return  InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{sub_id}_{user_id}_{username}"),
-            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{sub_id}_{user_id}_{username}")
-        ],
-        [InlineKeyboardButton(text="🚪 Выход", callback_data="menu")]
-    ])
