@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 from aiogram import Bot, Dispatcher
 
 from middlewares.active_users import ActivityTrackerMiddleware
@@ -8,6 +10,7 @@ from database.database import init_dbs
 from handlers import register_all_handlers
 from config import TOKEN, ADMIN_IDS
 from logs.logging_config import setup_logging
+from payments.check_expirinh_prems import schedule_notifications
 
 
 async def setup_bot():
@@ -23,6 +26,14 @@ async def setup_bot():
     await bot.delete_webhook(drop_pending_updates=True)
 
     register_all_handlers(dp)
+
+    try:
+        # Запускаем планировщик уведомлений
+        asyncio.create_task(schedule_notifications(bot))
+        # Запускаем обработку истекающих подписок
+        # сделать
+    except Exception as e:
+        logging.error(f"Ошибка в основном цикле: {e}")
 
     return dp, bot
 

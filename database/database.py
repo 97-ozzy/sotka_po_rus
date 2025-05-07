@@ -197,7 +197,7 @@ async def get_expiring_premium_users(current_date):
         rows = await conn.fetch('''
             SELECT user_id, payment_method_id 
             FROM users 
-            WHERE premium_expires_date = $1 and payment_method_id != '-'
+            WHERE premium_expires_date <= $1 AND payment_method_id = '-' AND premium = TRUE
                         ''', current_date)
         return rows
 
