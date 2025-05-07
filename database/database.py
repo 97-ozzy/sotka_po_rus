@@ -45,21 +45,12 @@ async def init_dbs():
         username TEXT DEFAULT '-',
         last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         premium BOOLEAN DEFAULT FALSE,
-        premium_expires TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        premium_expires DATE DEFAULT CURRENT_DATE,
         submission_count INTEGER DEFAULT 0,
-        registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        registration_date DATE DEFAULT CURRENT_DATE,
+        payment_method_id TEXT
     );
 """)
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS subscriptions (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                username TEXT DEFAULT '-',
-                is_viewed BOOLEAN DEFAULT FALSE,
-                file TEXT,
-                time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
 
         await conn.execute('''
     CREATE TABLE IF NOT EXISTS word_submissions (
@@ -98,7 +89,14 @@ async def init_dbs():
     correct INTEGER DEFAULT 0,
     PRIMARY KEY (user_id, task_number, week_start)
 );''')
-
+        await conn.execute('''
+                CREATE TABLE IF NOT EXISTS payment_bills (
+                    user_id BIGINT NOT NULL,
+                    amount DECIMAL(5,2),
+                    date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    payment_id TEXT UNIQUE,
+                    PRIMARY KEY (payment_id)
+            );''')
 
 
 async def get_random_task(pool, task_number: int):
@@ -130,6 +128,7 @@ async def get_premium_users():
 
     return premium_users_cache
 
+
 async def add_user_to_db(user_id: int, username: str):
     pool = await get_pool()
     async with pool.acquire() as conn:
@@ -151,60 +150,65 @@ async def submit_new_word(user_id, task_number, correct_word, wrong_word):
             VALUES ($1, $2, $3, $4)
         ''', user_id, task_number, correct_word, wrong_word)
 
-async def submit_payment(user_id,username, file):
+
+
+#------------------------------------------------------------------------
+async def update_premium_status(user_id, is_true):
     pool = await get_pool()
-    async with pool.acquire() as conn:
-        await conn.execute('''
-            INSERT INTO subscriptions (user_id, username, file)
-            VALUES ($1, $2, $3)
-        ''', user_id, username, file)
-
-
-
-async def get_pending_premium():
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow('''
-                SELECT id, user_id, username, file, time
-                FROM subscriptions
-                WHERE is_viewed = FALSE
-                ORDER BY time DESC
-                LIMIT 1
-            ''')
-        return row
-
-async def set_premium_status(sub_id, user_id):
-    pool = await get_pool()
-    current_datetime = datetime.now()
-    time_delta = timedelta(days=30)
-    expire_date = current_datetime + time_delta
     async with pool.acquire() as conn:
         await conn.execute('''
                     UPDATE users
-                    SET premium=TRUE, premium_expires_date = $1
+                    SET  premium=$1
                     WHERE user_id = $2
-                ''', expire_date, user_id)
-        await conn.execute(
-            '''
-            UPDATE subscriptions
-            SET is_viewed = TRUE
-            WHERE id = $1
-            ''', sub_id)
+                ''', is_true, user_id)
 
-
-async def remove_bill_from_db(sub_id):
+async def update_premium_expiration(user_id, new_expiration):
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute('''
-                    DELETE FROM subscriptions
-            WHERE id = $1
-                ''', sub_id)
+                        UPDATE users
+                        SET  premium_expires_date=$1
+                        WHERE user_id = $2
+                    ''', new_expiration, user_id)
+
+async def submit_first_recurring_payment_info(user_id, payment_method_id):
+    user_id = int(user_id)
+    pool = await get_pool()
+    today = date.today()
+    expire_date = today.replace(month=today.month + 1)
+    async with pool.acquire() as conn:
+        await conn.execute('''
+                        UPDATE users
+                        SET premium=TRUE, premium_expires_date = $1, payment_method_id = $2
+                        WHERE user_id = $3
+                    ''', expire_date, payment_method_id, user_id)
+
+async def submit_payment(user_id, premium_price_rub, today, payment_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+                            INSERT INTO payment_bills (user_id, amount, date, payment_id)
+                            VALUES ($1, $2, $3, $4)
+                        ''', user_id, premium_price_rub, today, payment_id)
+
+async def get_expiring_premium_users(current_date):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch('''
+            SELECT user_id, payment_method_id 
+            FROM users 
+            WHERE premium_expires_date = $1 and payment_method_id != '-'
+                        ''', current_date)
+        return rows
 
 
-def get_week_start(date: datetime = None) -> datetime.date:
-    date = date or datetime.now()
-    return (date - timedelta(days=date.weekday())).date()
+#-------------------------------------------------------------------------
+
+def get_week_start(current_date: datetime = None) -> datetime.date:
+    current_date = current_date or datetime.now()
+    return (current_date - timedelta(days=current_date.weekday())).date()
 
 def get_previous_week_start() -> datetime.date:
     return get_week_start(datetime.now() - timedelta(weeks=1))
 
+#-----------------------------------------------------------------------

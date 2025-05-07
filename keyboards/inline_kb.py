@@ -9,19 +9,28 @@ def menu_button():
 def menu_and_buy_premium():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="💎 Оформить премиум", callback_data="premium")]
+        [InlineKeyboardButton(text="💎 ОФОРМИТЬ ПРЕМИУМ", callback_data="premium")]
     ])
+
+def confirm_payment_button(url):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Оплатить", url=url)],
+        [InlineKeyboardButton(text="Подтвердить платеж", callback_data="confirm_payment")]
+    ])
+
 def send_bill_keyboard(user_id, premium_status):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="🧾 Отправить чек", callback_data="send_bill")],
-        [InlineKeyboardButton(text="Т-БАНК", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
-        [InlineKeyboardButton(text="СБЕРБАНК", url="https://www.sberbank.com/sms/pbpn?requisiteNumber=79272323738")]
+        [InlineKeyboardButton(text="❤️ Поддержать", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="💳 Оплатить", callback_data="pay_terminal")],
+
     ]) if user_id not in premium_status else InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="❤️ Поддержать проект", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
-        [InlineKeyboardButton(text="😭 Отменить подписку", callback_data='support')],
+        [InlineKeyboardButton(text="❤️ Поддержать", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="😭 Отменить подписку", callback_data='support')]
     ])
+
+#---------------------------------------------------------------------------------------------
 
 def task_keyboard():
     inline_keyboard = [[InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]]
@@ -37,6 +46,8 @@ def task_keyboard():
 
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
+#---------------------------------------------------------------------------------------------
+
 def menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")],
@@ -46,6 +57,9 @@ def menu_keyboard():
         [InlineKeyboardButton(text="🆕 Добавить свои слова", callback_data="submit")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
     ])
+
+
+#---------------------------------------------------------------------------------------------
 
 def explain_wrong_answer_keyboard(task_id):
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -68,34 +82,17 @@ def buy_premium_wrong_answer_keyboard():
         [InlineKeyboardButton(text="🔁 Начать заново", callback_data=f"repeat_task")],
         [InlineKeyboardButton(text="💎 Оформить премиум", callback_data=f"premium")]
     ])
+#---------------------------------------------------------------------------------------------
 
-def moderation_keyboard(sub_id, user_id, correct_word):
+
+def period_selection_keyboard():
     return  InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{sub_id}_{user_id}_{correct_word}"),
-            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{sub_id}_{user_id}_{correct_word}")
-        ],
-        [InlineKeyboardButton(text="🚪 Выход", callback_data="moderation_exit")]
+        [InlineKeyboardButton(text="По каждой неделе (PDF)", callback_data="period_pdf")],
+        [InlineKeyboardButton(text="За все время", callback_data="period_all")],
+        [InlineKeyboardButton(text="Предыдущая неделя", callback_data="period_previous")],
+        [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")]
     ])
-
-def buy_premium_keyboard():
-    return  InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Купить Премиум за 20₽",
-                    callback_data="buy_premium"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Поддержать проект ❤️",
-                    callback_data="support_project"
-                )
-            ],
-            [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
-        ]
-    )
+#---------------------------------------------------------------------------------------------
 
 def premium_moderation_keyboard(sub_id, user_id, username):
     return  InlineKeyboardMarkup(inline_keyboard=[
@@ -104,12 +101,4 @@ def premium_moderation_keyboard(sub_id, user_id, username):
             InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{sub_id}_{user_id}_{username}")
         ],
         [InlineKeyboardButton(text="🚪 Выход", callback_data="menu")]
-    ])
-
-def period_selection_keyboard():
-    return  InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="По каждой неделе (PDF)", callback_data="period_pdf")],
-        [InlineKeyboardButton(text="За все время", callback_data="period_all")],
-        [InlineKeyboardButton(text="Предыдущая неделя", callback_data="period_previous")],
-        [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")]
     ])
