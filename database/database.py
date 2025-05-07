@@ -171,7 +171,7 @@ async def update_premium_expiration(user_id, new_expiration):
                         WHERE user_id = $2
                     ''', new_expiration, user_id)
 
-async def submit_first_payment_info(user_id, payment_method_id):
+async def submit_first_recurring_payment_info(user_id, payment_method_id):
     user_id = int(user_id)
     pool = await get_pool()
     today = date.today()
@@ -210,4 +210,35 @@ def get_week_start(current_date: datetime = None) -> datetime.date:
 
 def get_previous_week_start() -> datetime.date:
     return get_week_start(datetime.now() - timedelta(weeks=1))
+
+#-------------------------------------------------------------------------
+
+async def remove_bill_from_db(sub_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+                    DELETE FROM subscriptions
+            WHERE id = $1
+                ''', sub_id)
+
+
+async def get_pending_premium():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow('''
+                SELECT id, user_id, username, file, time
+                FROM subscriptions
+                WHERE is_viewed = FALSE
+                ORDER BY time DESC
+                LIMIT 1
+            ''')
+        return row
+
+async def submit_payment_bill(user_id,username, file):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+            INSERT INTO subscriptions (user_id, username, file)
+            VALUES ($1, $2, $3)
+        ''', user_id, username, file)
 

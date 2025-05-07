@@ -14,19 +14,20 @@ def menu_and_buy_premium():
 
 def confirm_payment_button(url):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Подтвердить платеж", callback_data="confirm_payment")],
-        [InlineKeyboardButton(text="Оплатить", url=url)]
+        [InlineKeyboardButton(text="Оплатить", url=url)],
+        [InlineKeyboardButton(text="Подтвердить платеж", callback_data="confirm_payment")]
     ])
 
 def send_bill_keyboard(user_id, premium_status):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="❤️ Поддержать", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
-        [InlineKeyboardButton(text="💎 ОФОРМИТЬ ПРЕМИУМ", callback_data='pay_premium')]
+        [InlineKeyboardButton(text="💳 Оплатить", callback_data="pay_terminal")],
 
     ]) if user_id not in premium_status else InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="❤️ Поддержать", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="😭 Отменить подписку", callback_data='support')]
     ])
 
 #---------------------------------------------------------------------------------------------
@@ -92,3 +93,12 @@ def period_selection_keyboard():
         [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")]
     ])
 #---------------------------------------------------------------------------------------------
+
+def premium_moderation_keyboard(sub_id, user_id, username):
+    return  InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{sub_id}_{user_id}_{username}"),
+            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reject_{sub_id}_{user_id}_{username}")
+        ],
+        [InlineKeyboardButton(text="🚪 Выход", callback_data="menu")]
+    ])

@@ -19,6 +19,6 @@ ADMIN_IDS = [ int(admin_id) for admin_id in ADMIN_IDS]
 TASKS = [4, 9, 10, 11, 12, 15]
 
 PREMIUM_PRICE_RUB = 40
-RENEWAL_RETURN_URL = "https://t.me/test_sotkapr_bot"
+RENEWAL_RETURN_URL = "https://t.me/sotka_po_rus_bot"
 SHOP_ID = os.getenv("SHOP_ID")
 UKASSA_TOKEN = os.getenv("UKASSA_TOKEN")
