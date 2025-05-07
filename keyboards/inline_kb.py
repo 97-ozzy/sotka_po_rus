@@ -20,6 +20,7 @@ def send_bill_keyboard(user_id, premium_status):
     ]) if user_id not in premium_status else InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="❤️ Поддержать проект", url="https://www.tinkoff.ru/rm/r_klyTPqTGBH.jaDfOaXBit/Kacre89102")],
+        [InlineKeyboardButton(text="😭 Отменить подписку", callback_data='support')],
     ])
 
 def task_keyboard():

@@ -21,7 +21,7 @@ async def start_support(callback: CallbackQuery, state: FSMContext):
         return
     await state.set_state(SupportStates.waiting_for_message)
     await callback.message.edit_text(
-            "✉️ Напишите своё сообщение, и мы обязательно прочитаем его!",
+            "✉️ Напишите своё сообщение, и мы обязательно ответим вам!",
             reply_markup=menu_button(), parse_mode='Markdown')
 
 
