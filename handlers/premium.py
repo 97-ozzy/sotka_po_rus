@@ -1,19 +1,16 @@
 import datetime
 import logging
-import time
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
 from yookassa import Configuration, Payment
 
-from config import RENEWAL_RETURN_URL, PREMIUM_PRICE_RUB, UKASSA_TOKEN, SHOP_ID, ADMIN_IDS
+from config import RENEWAL_RETURN_URL, PREMIUM_PRICE_RUB, UKASSA_TOKEN, SHOP_ID
 from database.database import get_premium_users, clear_cache, submit_payment, \
-    update_premium_status, update_premium_expiration, submit_payment_bill, get_pending_premium, remove_bill_from_db
-from fsm import BuyPremiumStates, Premium
+    update_premium_status, update_premium_expiration
 from handlers.base import to_menu
-from keyboards.inline_kb import send_bill_keyboard, confirm_payment_button, premium_moderation_keyboard
+from keyboards.inline_kb import send_bill_keyboard, confirm_payment_button
 
 # Настройка логирования
 logging.basicConfig(level=logging.WARNING)
@@ -22,9 +19,6 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 
-#ALLOWED_FILE_TYPES = ['photo']  # Допустимые типы файлов
-#ALLOWED_DOCUMENT_EXTENSIONS = ['jpg', 'jpeg', 'png']  # Допустимые расширения для документов
-TIMEOUT_SECONDS = 10*60
 
 Configuration.account_id = SHOP_ID
 Configuration.secret_key = UKASSA_TOKEN
@@ -150,115 +144,3 @@ async def check_payment_status(callback: CallbackQuery, state: FSMContext):
         await message.answer(
             "Платеж еще не обработан. Пожалуйста, подожди немного и попробуй снова."
         )
-
-
-# @router.callback_query(F.data == 'send_bill')
-# async def send_bill(callback: CallbackQuery, state: FSMContext):
-#     await state.set_state(BuyPremiumStates.waiting_for_bill)
-#     await callback.message.answer(
-#         "📸 Пожалуйста, отправь скриншот чека.\n"
-#         f"У тебя есть {TIMEOUT_SECONDS // 60} минут, чтобы отправить чек."
-#     )
-#     # Устанавливаем таймер для очистки состояния
-#     await state.update_data(start_time=time.time())
-
-
-# @router.message(BuyPremiumStates.waiting_for_bill)
-# async def get_bill(message: Message, state: FSMContext):
-#     user_id = message.from_user.id
-#     username = message.from_user.username
-#     state_data = await state.get_data()
-#     start_time = state_data.get('start_time', time.time())
-#
-#     # Проверка таймаута
-#     if time.time() - start_time > TIMEOUT_SECONDS:
-#         await message.answer(
-#             "⏰ Время ожидания чека истекло. Пожалуйста, начни процесс оплаты заново."
-#         )
-#         await state.clear()
-#         return
-#
-#     # Проверка на наличие фото или документа
-#     if not message.photo:
-#         await message.answer(
-#             "❌ Пожалуйста, отправь скриншот чека.\n"
-#             "Попробуй снова."
-#         )
-#         return
-#
-#
-#     # Получение file_id
-#     file_id = message.photo[-1].file_id
-#
-#     try:
-#         # Сохранение чека в базе данных
-#         await submit_payment_bill(user_id,username, file_id)
-#         await message.answer(
-#             "✅ Спасибо! Чек принят. Если всё верно, скоро получишь премиум-доступ 💎"
-#         )
-#         logger.info(f"Чек успешно обработан для пользователя {user_id}, file_id: {file_id}")
-#     except Exception as e:
-#         logger.error(f"Ошибка при сохранении чека для пользователя {user_id}: {e}")
-#         await message.answer(
-#             "😔 Произошла ошибка при обработке чека. Пожалуйста, попробуй снова или свяжитесь с поддержкой."
-#         )
-#     finally:
-#         await state.clear()
-#
-# async def send_premium_to_admin(message: Message, row):
-#     sub_id, user_id, username, file, time = row
-#
-#     text = (
-#         f"📝 *Заявка #{sub_id}*\n"
-#         f"⌚ Время {time}\n"
-#         f"🤖Пользователь @{username}"
-#     )
-#
-#     try:
-#         print(f"Sending photo with file_id: {file}")  # Отладка
-#         await message.answer_photo(
-#             photo=file,
-#             caption=text,
-#             parse_mode="Markdown",
-#             reply_markup=premium_moderation_keyboard(sub_id, user_id, username)
-#         )
-#     except Exception as e:
-#         print(f"Unexpected error with file_id: {file}, error: {e}")
-#         await message.answer(f"❌ Неизвестная ошибка: {e}")
-
-
-
-# @router.message(Command('moderate_premium'))
-# async def moderate_premium_handler(message: Message, state: FSMContext):
-#     if message.from_user.id not in ADMIN_IDS:
-#         return None
-#     row = await get_pending_premium()
-#     if not row:
-#         return await message.reply("ℹ️ Нет заявок на премиум.")
-#
-#     await state.set_state(Premium.moderating)
-#     return await send_premium_to_admin(message, row)
-#
-#
-# @router.callback_query(F.data.startswith("approve_"))
-# async def approve_premium(callback: CallbackQuery):
-#     sub_id, user_id, username = callback.data.split('_')[1:]
-#     user_id = int(user_id)
-#     sub_id = int(sub_id)
-#     await update_premium_status(user_id, True)
-#     today = datetime.date.today()
-#     expire_date = today.replace(month=today.month + 1)
-#     await update_premium_expiration(user_id, expire_date)
-#     await clear_cache()
-#     await callback.message.answer(f'Премиум выдан @{username} {user_id}')
-#
-#
-#
-# @router.callback_query(F.data.startswith("reject_"))
-# async def reject_premium(callback: CallbackQuery):
-#     sub_id, user_id, username = callback.data.split('_')[1:]
-#     sub_id = int(sub_id)
-#     user_id = int(user_id)
-#     await remove_bill_from_db(sub_id)
-#     await callback.message.delete()
-#     await callback.message.answer(f'Премиум отклонен @{username} {user_id}')

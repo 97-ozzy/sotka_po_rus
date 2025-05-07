@@ -95,8 +95,9 @@ async def update_task9_ng():
 
 
 async def main():
-   await update_explanations('utils/9_upd - 9_upd (копия) (1).csv')
+   #await update_explanations('utils/9_upd - 9_upd (копия) (1).csv')
    #await update_task9_ng()
+   pass
 
 
 if __name__ == "__main__":
