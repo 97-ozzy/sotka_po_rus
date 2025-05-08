@@ -153,5 +153,5 @@ async def delete_payment_data(callback: CallbackQuery):
     await callback.message.edit_reply_markup()
     expiring_date = await get_expiring_date(user_id)
     expiring_date = expiring_date.strftime("%d.%m.%Y")
-    await callback.message.answer(f'Данные привязки удаленны из системы. Подписка закончится {expiring_date}')
+    await callback.message.answer(f'⚠️Данные привязки удаленны из системы.\nПодписка закончится {expiring_date} ')
     await menu(callback.message)
