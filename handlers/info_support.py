@@ -6,11 +6,13 @@ from fsm import SupportStates
 from datetime import datetime
 
 from handlers.base import menu
-from keyboards.inline_kb import menu_button
+from keyboards.inline_kb import menu_button, info_support_keyboard
 
 router = Router()
 
-
+@router.callback_query(F.data == 'info')
+async def support_menu(callback: CallbackQuery):
+    await callback.message.edit_reply_markup(reply_markup=info_support_keyboard())
 
 @router.callback_query(F.data == 'support')
 async def start_support(callback: CallbackQuery, state: FSMContext):

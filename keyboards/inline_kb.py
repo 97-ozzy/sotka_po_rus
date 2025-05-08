@@ -50,7 +50,7 @@ def task_keyboard():
 
 def menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")],
+        [InlineKeyboardButton(text="ℹ️ Поддержка и информация", callback_data="info")],
         [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
         [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
         [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
@@ -94,3 +94,11 @@ def period_selection_keyboard():
         [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")]
     ])
 #---------------------------------------------------------------------------------------------
+
+def info_support_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Политика конфиденциальности", url="https://telegra.ph/Politika-konfidencialnosti-dlya-Telegram-bota-Sotka-Po-Russkomu-05-07")],
+        [InlineKeyboardButton(text="Пользовательское соглашение", url="https://telegra.ph/Polzovatelskoe-soglashenie-dlya-Telegram-bota-Sotka-Po-Russkomu-05-07")],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
+    ])
