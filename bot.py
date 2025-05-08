@@ -6,11 +6,11 @@ from aiogram import Bot, Dispatcher
 from middlewares.active_users import ActivityTrackerMiddleware
 from middlewares.antiflood import AntiSpamMiddleware
 from middlewares.error_handler import ErrorHandlerMiddleware
-from database.database import init_dbs
 from handlers import register_all_handlers
 from config import TOKEN, ADMIN_IDS
 from logs.logging_config import setup_logging
-from payments.check_expirinh_prems import schedule_notifications
+from scripts.check_expirinh_prems import schedule_premium_expired_notifications
+from scripts.send_adv_mails import schedule_mail_list
 
 
 async def setup_bot():
@@ -29,7 +29,9 @@ async def setup_bot():
 
     try:
         # Запускаем планировщик уведомлений
-        asyncio.create_task(schedule_notifications(bot))
+        asyncio.create_task(schedule_premium_expired_notifications(bot))
+        asyncio.create_task(schedule_mail_list(bot))
+
         # Запускаем обработку истекающих подписок
         # сделать
     except Exception as e:

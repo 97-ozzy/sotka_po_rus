@@ -219,3 +219,13 @@ async def get_expiring_date(user_id: int):
             "SELECT premium_expires_date FROM users WHERE user_id = $1", user_id
         )
     return expiring_date
+
+async def get_not_active_users_for_last(days: int):
+    today = date.today()
+    las_inactive_date = today.replace(day=today.day - days)
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        users = await conn.fetch(
+            "SELECT user_id FROM users WHERE last_active < $1 ", las_inactive_date
+        )
+    return users

@@ -6,6 +6,13 @@ def menu_button():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
     ])
+
+def menu_and_support():
+    return InlineKeyboardMarkup(inline_keyboard=[
+       [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
+    ])
+
 def menu_and_buy_premium():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
@@ -102,3 +109,4 @@ def info_support_keyboard():
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
     ])
+

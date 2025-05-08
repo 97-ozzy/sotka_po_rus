@@ -36,7 +36,7 @@ class AntiSpamMiddleware(BaseMiddleware):
     ) -> Any:
         # Check if the event is a Message or CallbackQuery with a valid user
         if not isinstance(event, (Message, CallbackQuery)) or not event.from_user:
-            logger.debug(f"Skipping event: {type(event).__name__} (no user or unsupported type)")
+            #logger.debug(f"Skipping event: {type(event).__name__} (no user or unsupported type)")
             return await handler(event, data)
 
         user_id = event.from_user.id

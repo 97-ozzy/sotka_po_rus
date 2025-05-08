@@ -30,7 +30,7 @@ async def remove_expired_premium(bot: Bot):
 
 
 # Функция для планирования ежедневного запуска в 18:00
-async def schedule_notifications(bot: Bot):
+async def schedule_premium_expired_notifications(bot: Bot):
     """Запускает уведомления каждый день в 18:00."""
     while True:
         now = datetime.now()
