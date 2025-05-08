@@ -49,7 +49,7 @@ async def have_not_been_here_for_a_while(bot: Bot):
             await bot.send_message(ADMIN_IDS[0], f"⚠️ Ошибка при отправке пользователю {user['user_id']}: {str(e)}")
             failed_count += 1
 
-    await bot.send_message(f"📊 Итог: успешно отправлено {success_count}, не удалось отправить {failed_count}")
+    await bot.send_message(ADMIN_IDS[0], f"📊 Итог: успешно отправлено {success_count}, не удалось отправить {failed_count}")
 
 
 
