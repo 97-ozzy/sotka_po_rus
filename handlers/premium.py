@@ -8,8 +8,8 @@ from yookassa import Configuration, Payment
 
 from config import RENEWAL_RETURN_URL, PREMIUM_PRICE_RUB, UKASSA_TOKEN, SHOP_ID
 from database.database import get_premium_users, clear_cache, submit_payment, \
-    update_premium_status, update_premium_expiration
-from handlers.base import to_menu
+    update_premium_status, update_premium_expiration, get_expiring_date
+from handlers.base import to_menu, menu
 from keyboards.inline_kb import send_bill_keyboard, confirm_payment_button
 
 # Настройка логирования
@@ -144,3 +144,14 @@ async def check_payment_status(callback: CallbackQuery, state: FSMContext):
         await message.answer(
             "Платеж еще не обработан. Пожалуйста, подожди немного и попробуй снова."
         )
+
+
+
+@router.callback_query(F.data == 'delete_payment_data')
+async def delete_payment_data(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    await callback.message.edit_reply_markup()
+    expiring_date = await get_expiring_date(user_id)
+    expiring_date = expiring_date.strftime("%d.%m.%Y")
+    await callback.message.answer(f'Данные привязки удаленны из системы. Подписка закончится {expiring_date}')
+    await menu(callback.message)

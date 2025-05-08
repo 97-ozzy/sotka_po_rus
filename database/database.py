@@ -212,3 +212,10 @@ def get_previous_week_start() -> datetime.date:
     return get_week_start(datetime.now() - timedelta(weeks=1))
 
 #-----------------------------------------------------------------------
+async def get_expiring_date(user_id: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        expiring_date = await conn.fetchval(
+            "SELECT premium_expires_date FROM users WHERE user_id = $1", user_id
+        )
+    return expiring_date
