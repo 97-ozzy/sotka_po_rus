@@ -220,12 +220,16 @@ async def get_expiring_date(user_id: int):
         )
     return expiring_date
 
-async def get_not_active_users_for_last(days: int):
+async def get_nonactive_users(day_from, day_to):
     today = date.today()
-    las_inactive_date = today.replace(day=today.day - days)
+    start_date = today - timedelta(days=day_from-1)
+    end_date = today - timedelta(days=day_to)
+
     pool = await get_pool()
     async with pool.acquire() as conn:
         users = await conn.fetch(
-            "SELECT user_id FROM users WHERE last_active < $1 ", las_inactive_date
+            "SELECT user_id FROM users WHERE last_active <= $1 AND last_active >= $2",
+            start_date,
+            end_date
         )
     return users

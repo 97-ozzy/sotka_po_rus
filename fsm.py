@@ -22,3 +22,7 @@ class Premium(StatesGroup):
 
 class StatsState(StatesGroup):
     waiting_for_date = State()
+
+class SendToEveryone(StatesGroup):
+    waiting_for_interval = State()
+    waiting_for_message = State()

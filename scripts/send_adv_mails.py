@@ -7,7 +7,7 @@ from aiogram.exceptions import TelegramForbiddenError
 from aiogram.types import  FSInputFile
 
 from config import PATH_TO_PHOTOS, ADMIN_IDS
-from database.database import get_expiring_premium_users, update_premium_status, get_not_active_users_for_last
+from database.database import get_expiring_premium_users, update_premium_status, get_nonactive_users
 from keyboards.inline_kb import menu_and_support
 
 
@@ -15,7 +15,7 @@ from keyboards.inline_kb import menu_and_support
 
 async def have_not_been_here_for_a_while(bot: Bot):
 
-    users = await get_not_active_users_for_last(2)
+    users = await get_nonactive_users(2, 7)
 
     if not users:
         return
