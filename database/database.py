@@ -248,4 +248,22 @@ async def get_referral_activations(user_id):
         data = await conn.fetchval(
             'SELECT referral_activations FROM users WHERE user_id = $1', user_id
         )
-    return [0, 0] if data == '-' else [map(int, data.split('_'))]
+    print(data)
+    return [0, 0] if data == '-' else [int(x) for x in data.split('_')]
+
+async def update_referral_activation(activation_type, amount, user_id):
+    referral_activations = await get_referral_activations(user_id)
+    print(referral_activations)
+    if activation_type == 'day':
+        referral_activations[1]+=amount
+    else:
+        referral_activations[0] += amount
+    referral_activations=[str(x) for x in referral_activations]
+    referral_activations='_'.join(referral_activations)
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+                            UPDATE users
+                            SET referral_activations = $1
+                            WHERE user_id = $2
+                        ''', referral_activations, user_id)

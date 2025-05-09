@@ -120,13 +120,15 @@ def info_support_keyboard():
     ])
 def referral_system_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="🔝 Активировать премиум", callback_data="activate_premium")]
+        [InlineKeyboardButton(text="🔝 Активировать премиум", callback_data="activate_premium")],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
     ])
 
 def referral_activation(day, month):
-    builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="🏠 Меню", callback_data="menu"))
-    builder.add(InlineKeyboardButton(text=f"Активировать на {day} дн" , callback_data=f"activate_day_{day}")) if day > 0 else None
-    builder.add(InlineKeyboardButton(text=f"Активировать на {month} мес", callback_data=f"activate_month_{month}")) if month > 0 else None
-    return builder.as_markup()
+    month_button = [InlineKeyboardButton(text=f"Активировать на {day} дн" , callback_data=f"activate_ref_day_{day}")] if day > 0 else None
+    day_button = [InlineKeyboardButton(text=f"Активировать на {month} мес", callback_data=f"activate_ref_month_{month}")] if month > 0 else None
+    kb = [[InlineKeyboardButton(text="🏠 Меню", callback_data="menu")], month_button, day_button]
+    while None in kb:
+        kb.remove(None)
+
+    return InlineKeyboardMarkup(inline_keyboard=kb)

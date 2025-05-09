@@ -197,7 +197,6 @@ async def select_another_task(callback: CallbackQuery):
     task_number =int(task_number)
     current_text = callback.message.text
     pool = await get_pool()
-    #print(task_number, word)
     async with pool.acquire() as conn:
         explanation = await conn.fetchval(
         """
