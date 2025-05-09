@@ -23,3 +23,6 @@ RENEWAL_RETURN_URL = "https://t.me/sotka_po_rus_bot"
 SHOP_ID = os.getenv("SHOP_ID")
 UKASSA_TOKEN = os.getenv("UKASSA_TOKEN")
 PATH_TO_PHOTOS = os.getenv('PATH_TO_PHOTOS')
+
+MONTHLY_REFERRED_NUMBER = 20
+DAILY_REFERRED_NUMBER = 2

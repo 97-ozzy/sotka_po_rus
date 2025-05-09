@@ -129,7 +129,7 @@ async def get_premium_users():
     return premium_users_cache
 
 
-async def add_user_to_db(user_id: int, username: str):
+async def add_user_to_db(user_id: int, username: str, referral_code: int):
     pool = await get_pool()
     async with pool.acquire() as conn:
         user_exists = await conn.fetchval(
@@ -138,8 +138,8 @@ async def add_user_to_db(user_id: int, username: str):
         if not user_exists:
             premium_expires_date = date.today() + timedelta(days=3)
             await conn.execute(
-                "INSERT INTO users (user_id, username, premium, premium_expires_date) VALUES ($1, $2, $3, $4)",
-                user_id, username, True, premium_expires_date
+                "INSERT INTO users (user_id, username, premium, premium_expires_date, referral_code) VALUES ($1, $2, $3, $4, $5)",
+                user_id, username, True, premium_expires_date, referral_code
             )
 
 async def submit_new_word(user_id, task_number, correct_word, wrong_word):
@@ -233,3 +233,19 @@ async def get_nonactive_users(day_from, day_to):
             end_date
         )
     return users
+
+async def count_users_referred_by(user_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        count = await conn.fetchval(
+            'SELECT COUNT(*) FROM users WHERE referral_code = $1', user_id
+        )
+    return count
+
+async def get_referral_activations(user_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        data = await conn.fetchval(
+            'SELECT referral_activations FROM users WHERE user_id = $1', user_id
+        )
+    return [0, 0] if data == '-' else [map(int, data.split('_'))]

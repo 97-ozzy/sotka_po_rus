@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import TASKS
 
@@ -12,6 +13,13 @@ def menu_and_support():
        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
     ])
+
+def menu_and_practice():
+    return InlineKeyboardMarkup(inline_keyboard=[
+       [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
+    ])
+
 
 def menu_and_buy_premium():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -60,6 +68,7 @@ def menu_keyboard():
         [InlineKeyboardButton(text="ℹ️ Поддержка и информация", callback_data="info")],
         [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
         [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
+        [InlineKeyboardButton(text="🆓 Бесплатный премиум", callback_data="referral_system")],
         [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
         [InlineKeyboardButton(text="🆕 Добавить свои слова", callback_data="submit")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
@@ -109,4 +118,15 @@ def info_support_keyboard():
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
     ])
+def referral_system_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(text="🔝 Активировать премиум", callback_data="activate_premium")]
+    ])
 
+def referral_activation(day, month):
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="🏠 Меню", callback_data="menu"))
+    builder.add(InlineKeyboardButton(text=f"Активировать на {day} дн" , callback_data=f"activate_day_{day}")) if day > 0 else None
+    builder.add(InlineKeyboardButton(text=f"Активировать на {month} мес", callback_data=f"activate_month_{month}")) if month > 0 else None
+    return builder.as_markup()
