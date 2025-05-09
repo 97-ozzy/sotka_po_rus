@@ -9,7 +9,7 @@ from aiogram.filters import Command, CommandStart, CommandObject
 from config import ADMIN_IDS, RENEWAL_RETURN_URL
 from database.database import add_user_to_db, clear_cache, get_pool, get_nonactive_users
 from fsm import SendToEveryone
-from keyboards.inline_kb import menu_keyboard
+from keyboards.inline_kb import menu_keyboard, menu_button
 
 router = Router()
 @router.message(CommandStart(deep_link=True))
@@ -69,7 +69,7 @@ async def send_message_everyone(message: Message, state: FSMContext):
     await message.answer('Укажите промежуток дней, которые пользователь не заходил (два числа через пробел):\n'
                          'Например: 2 9 означает, что рассылка будет отправлена пользователям,'
                          'которые последний рза заходили в бота в от 2 до 9 дней назад.'
-                         '0 означаете сегодня')
+                         '0 означаете сегодня', reply_markup=menu_button())
     await state.set_state(SendToEveryone.waiting_for_interval)
     
     
