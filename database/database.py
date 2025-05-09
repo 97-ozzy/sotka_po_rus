@@ -105,13 +105,13 @@ async def get_random_task(pool, task_number: int):
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT id, question, correct_answer, wrong_answer FROM questions WHERE task_number = $1",
+            "SELECT word, question, correct_answer, wrong_answer FROM questions WHERE task_number = $1",
             task_number)
         if not rows:
             logger.error(f"No tasks found in db for task_number: {task_number}")
             return None
 
-        cache[task_number] = [(row['id'], row['question'], row['correct_answer'], row['wrong_answer']) for row in rows]
+        cache[task_number] = [(row['word'], row['question'], row['correct_answer'], row['wrong_answer']) for row in rows]
         return random.choice(cache[task_number])
 
 

@@ -47,8 +47,8 @@ async def choose_task(callback: CallbackQuery, state: FSMContext):
         await callback.answer("Задание не найдено.")
         return
 
-    task_id, question, correct, wrong = result
-    await state.update_data(task_number=task_number, task_id= task_id,correct=correct, streak=0)
+    word, question, correct, wrong = result
+    await state.update_data(task_number=task_number, word=word, correct=correct, streak=0)
 
 
     options = [correct, wrong]
@@ -68,8 +68,8 @@ async def handle_answer(message: Message, state: FSMContext):
 
     data = await state.get_data()
     task_number = data["task_number"]
-    task_id = data['task_id']
     correct_answer = data["correct"]
+    word = data['word']
     user_choice = message.text.strip().lower() if task_number !=4 else message.text.strip()
     streak = data.get("streak", 0)
     pool = await get_pool()
@@ -77,12 +77,12 @@ async def handle_answer(message: Message, state: FSMContext):
 
         result = await get_random_task(pool, task_number)
 
-        task_id, question, correct, wrong = result
+        new_word, question, correct, wrong = result
         options = [correct, wrong]
         random.shuffle(options)
         options = options if task_number != 15 else ['н', 'нн']
 
-        await state.update_data(correct=correct, streak=streak + 1, task_id=task_id)
+        await state.update_data(correct=correct, streak=streak + 1, word=new_word)
 
         label = f'✅ Верно!\n\n{question}' if task_number != 4 else '✅ Верно!'
 
@@ -133,10 +133,10 @@ async def handle_answer(message: Message, state: FSMContext):
 
         await message.answer(
             "❌ Неверно", reply_markup=ReplyKeyboardRemove())
-        text = (f"Правильный ответ: {correct_answer}\n\n"
+        text = (f"Правильный ответ: {word}\n\n"
                 f"Правильных подряд ответов: {streak}{record_text}\n")
 
-        await message.answer(text, reply_markup= explain_wrong_answer_keyboard(task_id))
+        await message.answer(text, reply_markup= explain_wrong_answer_keyboard(task_number, word))
 
         await state.update_data(streak=0)
 
@@ -157,9 +157,9 @@ async def repeat_task_handler(callback: CallbackQuery, state: FSMContext):
 
     pool = await get_pool()
     result = await get_random_task(pool, task_number)
-    task_id, question, correct, wrong = result
+    word, question, correct, wrong = result
 
-    await state.update_data(correct=correct, task_id = task_id)
+    await state.update_data(correct=correct, word = word)
     await state.set_state(Practice.answering)
 
     options = [correct, wrong]
@@ -193,16 +193,17 @@ async def select_another_task(callback: CallbackQuery):
                                       reply_markup=buy_premium_wrong_answer_keyboard())
         await callback.answer()
         return
-    task_id = int(callback.data.split('_')[1])
-
+    task_number, word = callback.data.split('_')[1:]
+    task_number =int(task_number)
     current_text = callback.message.text
     pool = await get_pool()
+    #print(task_number, word)
     async with pool.acquire() as conn:
         explanation = await conn.fetchval(
         """
         SELECT explanation FROM questions
-        WHERE id = $1;
-        """, task_id)
+        WHERE task_number = $1 AND word = $2;
+        """, task_number, word)
     explanation = explanation.replace('\\n', '\n')
     new_text = current_text + '\n\n' + explanation
 
