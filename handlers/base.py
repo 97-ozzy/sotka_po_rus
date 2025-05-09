@@ -81,7 +81,7 @@ async def handle_interval(message: Message, state: FSMContext):
         await message.answer(f'Ошибка в формате, начните сначала: ❗{e}')
         await state.clear()
         return
-    await message.answer('Жду сообщение для рассылки...')
+    await message.answer('Жду сообщение для рассылки...', reply_markup=menu_button())
     await state.update_data(start_day=start_day, end_day=end_day)
     await state.set_state(SendToEveryone.waiting_for_message)
 
