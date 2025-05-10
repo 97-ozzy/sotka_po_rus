@@ -38,7 +38,7 @@ async def menu(message: Message):
     except:
         pass
     await message.answer(
-        "📚 *Каждое новое добавленное слово улучшает твою подготовку!*",
+        "📚 *Добавляй свои слова, чтоб улучшить подготовку!*",
         parse_mode="Markdown", reply_markup=menu_keyboard())
 
 @router.callback_query(F.data == "menu")

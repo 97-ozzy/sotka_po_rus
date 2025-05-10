@@ -5,11 +5,12 @@ from aiogram.exceptions import TelegramForbiddenError
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
+from aiogram.utils.deep_linking import create_start_link
 
 from config import ADMIN_IDS
 from database.database import clear_cache, get_nonactive_users
 from fsm import SendToEveryone
-from keyboards.inline_kb import menu_button, menu_and_practice
+from keyboards.inline_kb import menu_button, menu_referral_practice
 
 router = Router()
 
@@ -62,6 +63,7 @@ async def handle_sending_message(message: Message, state: FSMContext):
     failed_count = 0
     for user in users:
         # print(user['user_id'])
+        referral_link = await create_start_link(message.bot, str(user['user_id']))
         try:
             if photo:
                 # print(photo[-1].file_id)
@@ -70,14 +72,14 @@ async def handle_sending_message(message: Message, state: FSMContext):
                     photo=photo[-1].file_id,
                     caption=text,
                     parse_mode='Markdown',
-                    reply_markup=menu_and_practice()
+                    reply_markup=menu_referral_practice(referral_link)
                 )
             else:
                 await bot.send_message(
                     chat_id=int(user['user_id']),
                     text=text,
                     parse_mode='Markdown',
-                    reply_markup=menu_and_practice())
+                    reply_markup=menu_referral_practice(referral_link))
             success_count += 1
             await asyncio.sleep(0.5)
 

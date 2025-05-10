@@ -14,9 +14,13 @@ def menu_and_support():
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
     ])
 
-def menu_and_practice():
+def menu_referral_practice(referral_link):
     return InlineKeyboardMarkup(inline_keyboard=[
        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(
+            text="📢 Поделиться ссылкой",
+            switch_inline_query=f"Привет, нашел крутого бота для подготовки к ЕГЭ по русскому.\n"
+                                f"Присоединяйся по моей ссылке: {referral_link}")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
     ])
 
@@ -68,7 +72,7 @@ def menu_keyboard():
         [InlineKeyboardButton(text="ℹ️ Поддержка и информация", callback_data="info")],
         [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
         [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
-        [InlineKeyboardButton(text="🆓 Бесплатный премиум", callback_data="referral_system")],
+        [InlineKeyboardButton(text="😱 Бесплатный премиум", callback_data="referral_system")],
         [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
         [InlineKeyboardButton(text="🆕 Добавить свои слова", callback_data="submit")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
