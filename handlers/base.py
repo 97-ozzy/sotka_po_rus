@@ -14,7 +14,7 @@ async def start(message: Message, command: CommandObject):
     username = message.from_user.username
     referral_code = command.args
     referral_code = int(referral_code) if referral_code else 0
-    print(referral_code)
+    #print(referral_code)
     await add_user_to_db(user_id, username, referral_code)
     await message.answer(
          'Привет! Я — твой помощник для подготовки к экзамену. Я помогу тебе с заданиями и дам полезные советы.\n\n'

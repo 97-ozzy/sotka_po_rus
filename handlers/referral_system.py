@@ -71,7 +71,7 @@ async def activate_premium_day_month(callback: CallbackQuery):
 
     await update_premium_expiration(user_id, new_expiring_date)
     await update_premium_status(user_id, True)
-    await callback.message.answer(f'🥳 Премиум успешно активирован на {amount} дней 🥳')
+    await callback.message.edit_text(f'🥳 Премиум успешно активирован на {amount} дней 🥳')
     await menu(callback.message)
 
 
