@@ -30,7 +30,7 @@ async def setup_bot():
     try:
         # Запускаем планировщик уведомлений
         asyncio.create_task(schedule_premium_expired_notifications(bot))
-        asyncio.create_task(schedule_mail_list(bot))
+        #asyncio.create_task(schedule_mail_list(bot))
 
         # Запускаем обработку истекающих подписок
         # сделать

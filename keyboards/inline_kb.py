@@ -118,10 +118,15 @@ def info_support_keyboard():
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
         [InlineKeyboardButton(text="✉️ Написать в поддержку", callback_data="support")]
     ])
-def referral_system_keyboard():
+def referral_system_keyboard(referral_link):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔝 Активировать премиум", callback_data="activate_premium")],
-        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")]
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
+        [InlineKeyboardButton(
+            text="📢 Поделиться ссылкой",
+            switch_inline_query=f"Привет, нашел крутого бота для подготовки к ЕГЭ по русскому.\n"
+                                f"Присоединяйся по моей ссылке: {referral_link}")],
+        [InlineKeyboardButton(text="🔝 Активировать премиум", callback_data="activate_premium")]
+
     ])
 
 def referral_activation(day, month):

@@ -1,6 +1,8 @@
 import datetime
+import logging
 
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 from aiogram.utils.deep_linking import create_start_link
 
@@ -8,10 +10,13 @@ from config import DAILY_REFERRED_NUMBER, \
     MONTHLY_REFERRED_NUMBER
 from database.database import update_premium_expiration, get_expiring_date, count_users_referred_by, \
     get_referral_activations, update_referral_activation, update_premium_status
+from handlers.base import menu
 from keyboards.inline_kb import referral_system_keyboard, \
     referral_activation
 
 router = Router()
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
 @router.callback_query(F.data == 'referral_system')
@@ -21,23 +26,29 @@ async def referral_info(callback: CallbackQuery):
                                      f'🔗 Вот твоя реферальная ссылка: `{referral_link}`\n\n'
                                      f'😉 За каждых {DAILY_REFERRED_NUMBER} друзей ты получаешь *+1 день премиума*! Даже, если он у тебя уже есть!\n\n'
                                      f'😁 Пригласив {MONTHLY_REFERRED_NUMBER} человек, ты получишь *премиум на месяц*!',
-                                     reply_markup=referral_system_keyboard(),
+                                     reply_markup=referral_system_keyboard(referral_link),
                                      parse_mode='Markdown')
 
     
 @router.callback_query(F.data == 'activate_premium')
 async def activate_premium(callback: CallbackQuery):
+    try:
+        await callback.message.edit_reply_markup()
+
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            return
+
     user_id = callback.from_user.id
     referred_users_count = await count_users_referred_by(user_id)
     month_activation, day_activation = await get_referral_activations(user_id)
-    get_premium_days = referred_users_count//DAILY_REFERRED_NUMBER - day_activation
-    get_premium_month = referred_users_count//MONTHLY_REFERRED_NUMBER - month_activation
+    get_premium_days = referred_users_count // DAILY_REFERRED_NUMBER - day_activation
+    get_premium_month = referred_users_count // MONTHLY_REFERRED_NUMBER - month_activation
     text = f'По твоей ссылке перешли: *{referred_users_count} человек*\n'
-    text+= f'😎 Ты уже активировал премиум на {day_activation} день/дней.\n' if day_activation >0 else ''
-    text+= f'😎 Ты уже активировал премиум на {month_activation} месяц/месяцев.\n' if month_activation >0 else ''
-    text+= f'\n🤩 Ты можешь активировать премиум на {get_premium_days} день/дней\n' if get_premium_days >0 else ''
-    text+= f'\n🤩 Ты можешь активировать премиум на {get_premium_month} месяц/месяцев' if get_premium_month > 0 else ''
-    await callback.message.edit_reply_markup()
+    text += f'😎 Ты уже активировал премиум на {day_activation} день/дней.\n' if day_activation > 0 else ''
+    text += f'😎 Ты уже активировал премиум на {month_activation} месяц/месяцев.\n' if month_activation > 0 else ''
+    text += f'\n🤩 Ты можешь активировать премиум на {get_premium_days} день/дней\n' if get_premium_days > 0 else ''
+    text += f'\n🤩 Ты можешь активировать премиум на {get_premium_month} месяц/месяцев' if get_premium_month > 0 else ''
     await callback.message.answer(text=text,
                                   reply_markup=referral_activation(get_premium_days, get_premium_month),
                                   parse_mode='Markdown')
@@ -61,6 +72,7 @@ async def activate_premium_day_month(callback: CallbackQuery):
     await update_premium_expiration(user_id, new_expiring_date)
     await update_premium_status(user_id, True)
     await callback.message.answer(f'🥳 Премиум успешно активирован на {amount} дней 🥳')
+    await menu(callback.message)
 
 
 
