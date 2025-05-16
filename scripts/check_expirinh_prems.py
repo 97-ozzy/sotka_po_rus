@@ -3,7 +3,7 @@ from datetime import date, datetime
 from aiogram import Bot
 import logging
 
-from database.database import get_expiring_premium_users, update_premium_status
+from database.database import get_expiring_premium_users, update_premium_status, clear_cache
 
 
 async def remove_expired_premium(bot: Bot):
@@ -27,6 +27,7 @@ async def remove_expired_premium(bot: Bot):
             logging.info(f"Уведомление отправлено пользователю {user_id}")
         except Exception as e:
             logging.error(f"Ошибка при отправке уведомления пользователю {user_id}: {e}")
+    await clear_cache()
 
 
 # Функция для планирования ежедневного запуска в 18:00
