@@ -17,10 +17,10 @@ def menu_and_support():
 def menu_referral_practice(referral_link):
     return InlineKeyboardMarkup(inline_keyboard=[
        [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(
-            text="📢 Поделиться ссылкой",
-            switch_inline_query=f"Привет, нашел крутого бота для подготовки к ЕГЭ по русскому.\n"
-                                f"Присоединяйся по моей ссылке: {referral_link}")],
+        # [InlineKeyboardButton(
+        #     text="📢 Поделиться ссылкой",
+        #     switch_inline_query=f"Привет, нашел крутого бота для подготовки к ЕГЭ по русскому.\n"
+        #                         f"Присоединяйся по моей ссылке: {referral_link}")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
     ])
 
