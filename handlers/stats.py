@@ -27,13 +27,13 @@ async def user_stats(callback: CallbackQuery):
     await callback.answer()
     premium_users = await get_premium_users()
     if callback.from_user.id not in premium_users:
-        await callback.message.edit_text('Личная статистика доступна только премиум пользователям',
+        await callback.message.edit_text('Посмотреть прогресс может только премиум пользователь',
                                       reply_markup=menu_and_buy_premium())
         await callback.answer()
         return
 
     try:
-        await callback.message.edit_text("Выберите период для просмотра статистики:",
+        await callback.message.edit_text("Выбери период для просмотра статистики:",
                                       reply_markup=period_selection_keyboard())
     except TelegramBadRequest as e:
         if "message is not modified" in str(e):
@@ -64,7 +64,7 @@ async def handle_period_all(callback: CallbackQuery):
         await callback.message.answer("У вас пока нет статистики за любой период.")
         return
 
-    text = "📊 Ваша статистика за все время:\n\n"
+    text = "📊 Твоя статистика за все время:\n\n"
     for row in rows:
         task_number = row["task_number"]
         total = row["total_attempts"]

@@ -70,11 +70,11 @@ def task_keyboard():
 def menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="ℹ️ Поддержка и информация", callback_data="info")],
-        [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
-        [InlineKeyboardButton(text="📊 Моя статистика", callback_data="stats")],
-        [InlineKeyboardButton(text="😱 Бесплатный премиум", callback_data="referral_system")],
-        [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
         [InlineKeyboardButton(text="🆕 Добавить свои слова", callback_data="submit")],
+        [InlineKeyboardButton(text="💎 Премиум-возможности", callback_data="premium")],
+        [InlineKeyboardButton(text="😱 Бесплатный премиум", callback_data="referral_system")],
+        [InlineKeyboardButton(text="🏆 Список лидеров", callback_data="leaderboard")],
+        [InlineKeyboardButton(text="📈 Мой прогресс", callback_data="stats")],
         [InlineKeyboardButton(text="💪 Приступить к практике", callback_data="start_practice")]
     ])
 
@@ -108,10 +108,10 @@ def buy_premium_wrong_answer_keyboard():
 def period_selection_keyboard():
     return  InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 Меню", callback_data="menu")],
-        [InlineKeyboardButton(text="По каждой неделе (PDF)", callback_data="period_pdf")],
         [InlineKeyboardButton(text="За все время", callback_data="period_all")],
         [InlineKeyboardButton(text="Предыдущая неделя", callback_data="period_previous")],
-        [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")]
+        [InlineKeyboardButton(text="Текущая неделя", callback_data="period_current")],
+        [InlineKeyboardButton(text="По каждой неделе (PDF)", callback_data="period_pdf")],
     ])
 #---------------------------------------------------------------------------------------------
 
