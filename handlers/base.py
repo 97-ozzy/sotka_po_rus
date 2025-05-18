@@ -39,7 +39,9 @@ async def menu(message: Message):
     except:
         pass
     await message.answer(
-        "📚 *Добавляй свои слова, чтоб улучшить подготовку!*",
+        # "📚 *Добавляй свои слова, чтоб улучшить подготовку!*",
+        '😉 Пройди короткий опрос, помоги нам стать лучше, взамен получишь *ПРЕМИУМ НА НЕДЕЛЮ*\n'
+        '[Нажми сюда](https://docs.google.com/forms/d/e/1FAIpQLSd4E4gDNSZWkTzc1ftwMbc3JVnz5BmLRLX9uCKel-yqCSiXjg/viewform)',
         parse_mode="Markdown", reply_markup=menu_keyboard())
 
 @router.callback_query(F.data == "menu")
